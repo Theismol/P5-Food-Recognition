@@ -53,8 +53,7 @@ function Recipes() {
                                 sx={{
                                     border: '1px solid #ccc',
                                     borderRadius: 2,
-                                    padding: 2,
-                                    
+                                    padding: 2,                                   
                                     boxShadow: 1,
                                 }}
                             >
