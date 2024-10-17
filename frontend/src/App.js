@@ -1,24 +1,39 @@
-import logo from './logo.svg';
 import './App.css';
+import Home from "./pages/home/Home";
+import Recipes from "./pages/recipes/Recipes";
+import Ingredients from "./pages/ingredients/Ingredients";
+import { Routes, Route } from "react-router-dom";
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+
+const darkTheme = createTheme({
+  palette: {
+      mode: 'dark',
+      primary: {
+          main: '#1769aa', // Adjust as needed
+          contrastText: '#fff', // Button text color
+      },
+      background: {
+          default: '#08192c', // Default background color for dark mode
+          paper: '#6166ed', // Paper background color
+          input: '#fff', // Input background color
+      },
+  },
+});
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/recipes" element={<Recipes />} />
+                <Route path="/ingredients" element={<Ingredients />} />
+            </Routes>
+
+    </ThemeProvider>
+    
   );
 }
 
