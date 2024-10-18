@@ -68,10 +68,10 @@ function Recipes() {
               <ListItemText primary="Home" />
             </ListItem>
             <ListItem button sx={{ cursor: 'pointer' }}>
-              <ListItemText primary="About" />
+              <ListItemText primary="Ingredients" />
             </ListItem>
             <ListItem button sx={{ cursor: 'pointer' }}>
-              <ListItemText primary="Contact" />
+              <ListItemText primary="Recipes" />
             </ListItem>
           </List>
         </Box>
