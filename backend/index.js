@@ -2,14 +2,14 @@ const port = 4000;
 const app = express();
 import express from 'express';
 import cors from 'cors';
-
 const router = express.Router();
+import ingredientsRoutes from './src/routes/ingredientsRoutes.js';
 
 //routes
 //const exampleRoute = require('path_to_your_routes.js')
 
-
-
+//declaration
+app.use('/api/ingredients', ingredientsRoutes);
 app.use(cors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -20,8 +20,6 @@ app.use(cors({
 app.use(express.json());
 //allows to access static files through URL
 app.use(express.static('public'));
-
-
 
 //specific routes
 // app.use('/api/ROUTENAME', imported route at the top of the document);
