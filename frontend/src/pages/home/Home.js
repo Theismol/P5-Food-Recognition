@@ -5,10 +5,17 @@ import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import { useNavigate } from 'react-router-dom';
+
 
 const drawerHeight = 54; // Adjust the height as needed
 
 function Home() {
+  const navigate = useNavigate(); // useNavigate hook for navigation
+
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
   return (
     <Box
       sx={{
@@ -53,13 +60,13 @@ function Home() {
           }}
         >
           <List sx={{ display: 'flex' }}>
-            <ListItem button sx={{ cursor: 'pointer' }}>
+            <ListItem button sx={{ cursor: 'pointer' }} onClick={() => handleNavigation('/')}>
               <ListItemText primary="Home" />
             </ListItem>
-            <ListItem button sx={{ cursor: 'pointer' }}>
+            <ListItem button sx={{ cursor: 'pointer' }} onClick={() => handleNavigation('/ingredients')}>
               <ListItemText primary="Ingredients" />
             </ListItem>
-            <ListItem button sx={{ cursor: 'pointer' }}>
+            <ListItem button sx={{ cursor: 'pointer' }} onClick={() => handleNavigation('/recipes')}>
               <ListItemText primary="Recipes" />
             </ListItem>
           </List>
