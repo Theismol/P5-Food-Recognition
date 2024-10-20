@@ -6,19 +6,54 @@ import { Routes, Route } from "react-router-dom";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-
 const darkTheme = createTheme({
   palette: {
-      mode: 'dark',
-      primary: {
-          main: '#1769aa', // Adjust as needed
-          contrastText: '#fff', // Button text color
+    mode: 'dark',
+    primary: {
+      main: '#C0B9DD',
+      contrastText: '#000000', // Default text color
+    },
+    background: {
+      default: '#F7F7F8',
+      paper: '#F7F4EA',
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          color: '#000000', // Ensures button text is black
+        },
       },
-      background: {
-          default: '#08192c', // Default background color for dark mode
-          paper: '#6166ed', // Paper background color
-          input: '#fff', // Input background color
+    },
+    MuiListItemText: {
+      styleOverrides: {
+        primary: {
+          color: '#000000', // Ensures ListItemText in the drawer is black
+        },
       },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#75c9c8', // Background color for dropdown menu
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          color: '#000000', // Text color for each item in the dropdown menu
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          color: '#000000', // Default text color for Select
+        },
+      },
+    },
   },
 });
 
@@ -26,14 +61,12 @@ function App() {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/recipes" element={<Recipes />} />
-                <Route path="/ingredients" element={<Ingredients />} />
-            </Routes>
-
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/recipes" element={<Recipes />} />
+        <Route path="/ingredients" element={<Ingredients />} />
+      </Routes>
     </ThemeProvider>
-    
   );
 }
 
