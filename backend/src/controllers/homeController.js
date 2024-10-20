@@ -1,16 +1,11 @@
 import axios from 'axios';
 
+export const cloudImageRecognition = async (req, res) => {
+    const { image } = req.body;
 
-
-
-
-
-const cloudImageRecognition = async (req, res) => {
     if (!image) {
         return res.status(400).json({ error: 'No image provided' })
     }
-    const { image } = req.body;
-
     try {
         const response = await axios.post('PATH-TO-IMAGE-RECOGNITION-MICROSERVICE', { image: image });
         res.json(response.data)
@@ -22,7 +17,7 @@ const cloudImageRecognition = async (req, res) => {
 
 
 
-const addIngredientToStock = async (req, res) => {
+export const addIngredientToStock = async (req, res) => {
     const { name, quantity, expiry } = req.body;
 
     if (!name || !quantity) {
@@ -38,7 +33,3 @@ const addIngredientToStock = async (req, res) => {
     }
 }
 
-module.exports = {
-    cloudImageRecognition,
-    addIngredientToStock
-}
