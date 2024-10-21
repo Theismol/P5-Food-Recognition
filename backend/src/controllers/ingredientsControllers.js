@@ -1,26 +1,17 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import axios from 'axios'; // Import axios for external HTTP requests
 
-// Get the current directory path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Function to connect to the database and execute a query
+/*const executeQuery = async (query) => {
+    try {
+        const result = await sql.query(query);
+        return result.recordset;
+    } catch (error) {
+        console.error('SQL error', error);
+        throw error;
+    }
+};*/
 
-// Path to the dummy data file
-const dummyDataFile = join(__dirname, '../data/dummyData.json');
-
-// Read the dummy data from the file
-const readDummyData = () => {
-    const data = readFileSync(dummyDataFile);
-    return JSON.parse(data);
-};
-
-// Write data to the dummy data file
-const writeDummyData = (data) => {
-    writeFileSync(dummyDataFile, JSON.stringify(data, null, 2));
-};
-
-// Validate ingredient data
+// Manual validation function
 const validateIngredientData = (data) => {
     const { amount, unit, expiryDate, type } = data;
     if (!amount || !unit || !expiryDate || !type) {
@@ -29,75 +20,99 @@ const validateIngredientData = (data) => {
 };
 
 // Get all ingredients
-export const getIngredients = (req, res) => {
+export const getIngredients = async (req, res) => {
+    const query = 'SELECT * FROM Ingredients';
     try {
-        const ingredients = readDummyData();
+    
+        const ingredients = await executeQuery(query);
         res.json(ingredients);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// Add a new ingredient
-export const addIngredient = (req, res) => {
-    const ingredientData = req.body;
+// Add a new ingredient and notify external service via Axios
+export const addIngredient = async (req, res) => {
+    try {
+        validateIngredientData(req.body);
+    } catch (error) {
+        return res.status(400).json({ message: error.message }); 
+    }
+
+    const { amount, unit, expiryDate, type } = req.body;
+    const query = `INSERT INTO Ingredients (amount, unit, expiryDate, type) VALUES (${amount}, '${unit}', '${expiryDate}', '${type}')`;
 
     try {
-        validateIngredientData(ingredientData);
-        const ingredients = readDummyData();
+        await executeQuery(query);
 
-        const newId = ingredients.length > 0 ? Math.max(...ingredients.map(ing => ing.id)) + 1 : 1;
+        const response = await axios.post('....', {
+            amount,
+            unit,
+            expiryDate,
+            type
+        });
 
-        const newIngredient = { id: newId, ...ingredientData };
-        ingredients.push(newIngredient);
-        writeDummyData(ingredients);
-        res.status(201).json(newIngredient);
+        res.status(201).json({ message: 'Ingredient added successfully', externalResponse: response.data });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+    
+};
+
+// Edit an ingredient and notify external service via Axios
+export const editIngredient = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID parameter' });
+    }
+
+    try {
+        validateIngredientData(req.body);
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+
+    const { amount, unit, expiryDate, type } = req.body;
+    const query = `UPDATE Ingredients SET amount = ${amount}, unit = '${unit}', expiryDate = '${expiryDate}', type = '${type}' WHERE id = ${id}`;
+
+    try {
+        // Execute the SQL query to update the ingredient
+        await executeQuery(query);
+
+        const response = await axios.post('...', {
+            id,
+            amount,
+            unit,
+            expiryDate,
+            type
+        });
+
+        res.json({ message: 'Ingredient updated successfully', externalResponse: response.data });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
 
-// Edit an ingredient
-export const editIngredient = (req, res) => {
+// Remove an ingredient and notify external service via Axios
+export const removeIngredient = async (req, res) => {
     const { id } = req.params;
-    const ingredientData = req.body;
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid ID parameter' });
+    }
+
+    const query = `DELETE FROM Ingredients WHERE id = ${id}`;
 
     try {
-        validateIngredientData(ingredientData);
-        const ingredients = readDummyData();
-        const ingredient = ingredients.find((ing) => ing.id === parseInt(id));
+        // Execute the SQL query to delete the ingredient
+        await executeQuery(query);
 
-        if (!ingredient) {
-            return res.status(404).json({ message: 'Ingredient not found' });
-        }
+        const response = await axios.post('....', { id });
 
-        Object.assign(ingredient, ingredientData);
-        writeDummyData(ingredients);
-        res.json(ingredient);
+        res.status(204).json({ message: 'Ingredient deleted successfully', externalResponse: response.data });
     } catch (error) {
         res.status(400).json({ message: error.message });
-    }
-};
-
-// Remove an ingredient
-export const removeIngredient = (req, res) => {
-    const { id } = req.params;
-    console.log(`Removing ingredient with ID: ${id}`);
-
-    try {
-        let ingredients = readDummyData();
-        const initialLength = ingredients.length;
-
-        ingredients = ingredients.filter((ing) => ing.id !== parseInt(id));
-
-        if (ingredients.length === initialLength) {
-            return res.status(404).json({ message: 'Ingredient not found' });
-        }
-
-        writeDummyData(ingredients);
-        res.status(204).send();
-    } catch (error) {
-        res.status(500).json({ message: error.message });
     }
 };
 

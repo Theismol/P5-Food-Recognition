@@ -9,7 +9,5 @@ router.post('/add', ingredientsControllers.addIngredient);
 router.put('/edit/:id', ingredientsControllers.editIngredient);
 router.delete('/remove/:id', ingredientsControllers.removeIngredient);
 
-// Other routes can be defined here
-//router.get('/', ingredientsControllers.getIngredients);
 // Export the router as the default export
 export default router;

@@ -1,8 +1,0 @@
-[
-    { "id": 1, "amount": 250, "unit": "grams", "expiryDate": "2025-01-01", "type": "vegetable" },
-    { "id": 2, "amount": 1.5, "unit": "liters", "expiryDate": "2024-12-15", "type": "liquid" },
-    { "id": 3, "amount": 100, "unit": "milliliters", "expiryDate": "2024-11-30", "type": "oil" },
-    { "id": 4, "amount": 500, "unit": "grams", "expiryDate": "2025-03-10", "type": "fruit" },
-    { "id": 5, "amount": 2, "unit": "pieces", "expiryDate": "2024-10-31", "type": "dairy" },
-    { "id": 6, "amount": 300, "unit": "grams", "expiryDate": "2024-09-25", "type": "meat" }
-]
