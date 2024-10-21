@@ -4,7 +4,7 @@ import express from 'express';
 import cors from 'cors';
 
 const router = express.Router();
-
+import homeRoutes from './src/routes/homeRoutes.js'
 //routes
 //const exampleRoute = require('path_to_your_routes.js')
 
@@ -25,6 +25,8 @@ app.use(express.static('public'));
 
 //specific routes
 // app.use('/api/ROUTENAME', imported route at the top of the document);
+
+app.use('/api/home', homeRoutes);
 app.use('/api/recipe', recipeRoutes);
 
 app.listen(port, () => {
