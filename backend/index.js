@@ -8,7 +8,7 @@ import homeRoutes from './src/routes/homeRoutes.js'
 //routes
 //const exampleRoute = require('path_to_your_routes.js')
 
-
+import recipeRoutes from './src/routes/recipeRoutes.js';
 
 app.use(cors({
     origin: true,
@@ -25,8 +25,9 @@ app.use(express.static('public'));
 
 //specific routes
 // app.use('/api/ROUTENAME', imported route at the top of the document);
-app.use('/api/home', homeRoutes);
 
+app.use('/api/home', homeRoutes);
+app.use('/api/recipe', recipeRoutes);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`)
