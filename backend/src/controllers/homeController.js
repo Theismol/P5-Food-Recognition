@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 export const cloudImageRecognition = async (req, res) => {
-    console.log("You did it");
     const { image } = req.body;
 
     if (!image) {
