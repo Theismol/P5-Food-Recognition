@@ -124,6 +124,7 @@ export default {
     addIngredient,
     editIngredient,
     removeIngredient,
+    //delete stock 
     getStock,
     addStock,
     getExpiryDates,
