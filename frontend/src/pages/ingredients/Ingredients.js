@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -26,7 +26,9 @@ function Ingredients() {
     const [sortOption, setSortOption] = useState('');
     const [sortedIngredients, setSortedIngredients] = useState(initialIngredients);
     const [selectedIngredient, setSelectedIngredient] = useState(null);
-
+    useEffect(() => {
+        fetchIngredients();
+    })
     const handleChangeSort = (event) => {
         const sortValue = event.target.value;
         setSortOption(sortValue);

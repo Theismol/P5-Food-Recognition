@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -7,20 +7,21 @@ import Select from '@mui/material/Select';
 import Navbar from '../components/Navbar';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import { Checkbox, ListItemText, Button } from '@mui/material';
+import { Checkbox, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
 const drawerHeight = 54; // Adjust the height as needed
 const recipes = [
-    { name: 'chicken tikka masala', diet: ["Gluten free"] },
-    { name: 'Vegetable lasagna', diet: ["Vegetarian"] },
-    { name: 'Cabbage stir fry', diet: ["Vegan", "Vegetarian", "Dairy free"] },
-    { name: 'Spaghetti carbonara', diet: [""] },
+    { name: 'Chicken Tikka Masala', diet: ["Gluten free"], ingredients: ["Chicken", "Spices", "Tomato sauce"], instructions: "Cook chicken with spices, add tomato sauce and simmer." },
+    { name: 'Vegetable Lasagna', diet: ["Vegetarian"], ingredients: ["Lasagna noodles", "Vegetables", "Cheese"], instructions: "Layer noodles with vegetables and cheese, then bake." },
+    { name: 'Cabbage Stir Fry', diet: ["Vegan", "Vegetarian", "Dairy free"], ingredients: ["Cabbage", "Carrots", "Soy sauce"], instructions: "Stir-fry cabbage and carrots with soy sauce." },
+    { name: 'Spaghetti Carbonara', diet: [""], ingredients: ["Spaghetti", "Eggs", "Bacon", "Parmesan"], instructions: "Cook pasta, mix with eggs and bacon, and serve with Parmesan." },
 ];
 
 const dietaryRestrictionsChoices = ["Vegetarian", "Gluten free", "Dairy free", "Vegan"]
 function Recipes() {
     const [dietaryRestrictions, setDietaryRestrictions] = React.useState([]);
-
+    const [open, setOpen] = useState(false);
+    const [selectedRecipe, setSelectedRecipe] = useState(null);
     const handleChange = (event) => {
 
         const {
@@ -32,7 +33,21 @@ function Recipes() {
         );
     };
     const onGenerateRecipes = () => {
-        console.log("generated");
+        //Axios call til backend der henter recipes ned
+        return
+    }
+    const handleMakeRecipe = (recipe) => {
+        setSelectedRecipe(recipe);
+        setOpen(true);
+        return
+    }
+    const handleClose = () => {
+        setOpen(false);
+        setSelectedRecipe(null);
+    }
+    const handleRecipeDone = () => {
+        //Axios request to delete the ingredients from stock
+        handleClose();
     }
 
 
@@ -43,13 +58,12 @@ function Recipes() {
                 variant="contained"
                 onClick={onGenerateRecipes} // Function to generate recipes
                 sx={{
-                    position: 'absolute', // Align it similarly to dropdown
+                    position: 'absolute',
                     right: 250,
                     height: 55,
                     marginRight: 10,
-                    top: drawerHeight + 30, // Place it just below the dropdown
-                    bgcolor: '#75c9c8', // Background color matching dropdown
-                    color: '#ffffff', // Text color
+                    top: drawerHeight + 30,
+                    bgcolor: '#75c9c8',
                     '&:hover': {
                         bgcolor: '#67b3b2', // Slightly different color on hover
                     },
@@ -105,7 +119,7 @@ function Recipes() {
             <Box sx={{ padding: 4, marginTop: 15 }}>
                 <Grid container spacing={2} columns={12}>
                     {recipes.map((recipe, index) => (
-                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} sx={{ position: "relative" }}>
                             <Box
                                 sx={{
                                     border: '1px solid #ccc',
@@ -127,13 +141,30 @@ function Recipes() {
                                         </Typography>
                                     ))}
                                 </Typography>
+                                <Button variant="contained" color="secondary" sx={{ position: 'absolute', right: 5, top: 5 }} onClick={() => { handleMakeRecipe(recipe) }}>Make recipe</Button>
                             </Box>
                         </Grid>
                     ))}
                 </Grid>
             </Box>
-
-        </Box>
+            <Dialog open={open} onClose={handleClose}>
+                <DialogTitle>{selectedRecipe?.name}</DialogTitle>
+                <DialogContent>
+                    <Typography variant="h6">Ingredients:</Typography>
+                    {selectedRecipe?.ingredients.map((ingredient, index) => (
+                        <Typography key={index} variant="body2">
+                            - {ingredient}
+                        </Typography>
+                    ))}
+                    <Typography variant="h6" sx={{ mt: 2 }}>Instructions:</Typography>
+                    <Typography variant="body2">{selectedRecipe?.instructions}</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleRecipeDone} sx={{ bgcolor: "#75c9c8" }}>Recipe finished!</Button>
+                    <Button onClick={handleClose} sx={{ bgcolor: "#75c9c8" }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+        </Box >
 
     );
 }
