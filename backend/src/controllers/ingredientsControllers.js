@@ -19,7 +19,7 @@ export const getIngredients = async () => {
 // Add a new ingredient
 export const addIngredient = async (ingredientData) => {
     try {
-        const response = await axios.post(`${apiBaseUrl}/ingredients`, ingredientData); // Matches Flask POST `/ingredients`
+        const response = await axios.post(`${apiBaseUrl}/ingredients`, ingredientData);
         return response.data;
     } catch (error) {
         console.error("Error adding ingredient:", error);
@@ -30,7 +30,7 @@ export const addIngredient = async (ingredientData) => {
 // Edit an existing ingredient
 export const editIngredient = async (id, updatedData) => {
     try {
-        const response = await axios.put(`${apiBaseUrl}/ingredients/${id}`, updatedData); // Matches Flask PUT `/ingredients/<id>`
+        const response = await axios.put(`${apiBaseUrl}/ingredients/${id}`, updatedData); 
         return response.data;
     } catch (error) {
         console.error("Error editing ingredient:", error);
@@ -41,7 +41,7 @@ export const editIngredient = async (id, updatedData) => {
 // Remove an ingredient
 export const removeIngredient = async (id) => {
     try {
-        await axios.delete(`${apiBaseUrl}/ingredients/${id}`); // Matches Flask DELETE `/ingredients/<id>`
+        await axios.delete(`${apiBaseUrl}/ingredients/${id}`); 
     } catch (error) {
         console.error("Error removing ingredient:", error);
         throw error;
@@ -72,6 +72,28 @@ export const addStock = async (stockData) => {
     }
 };
 
+// Edit existing stock
+export const editStock = async (id, stockData) => {
+    try {
+        const response = await axios.put(`${apiBaseUrl}/stock/${id}`, stockData);
+        return response.data;
+    } catch (error) {
+        console.error("Error editing stock:", error);
+        throw error;
+    }
+};
+
+// Remove stock by ID
+export const removeStock = async (id) => {
+    try {
+        const response = await axios.delete(`${apiBaseUrl}/stock/${id}`);
+        return response.data; 
+    } catch (error) {
+        console.error("Error removing stock:", error);
+        throw error;
+    }
+};
+
 //Expiry Date Service Functions
 
 // Fetch all expiry dates
@@ -96,25 +118,24 @@ export const addExpiryDate = async (expiryData) => {
     }
 };
 
-//Recipes-Ingredients Join Table Service Functions
-
-// Link a recipe with an ingredient
-export const addRecipeIngredientLink = async (linkData) => {
+// Update an existing expiry date
+export const editExpiryDate = async (id, expiryData) => {
     try {
-        const response = await axios.post(`${apiBaseUrl}/recipes_has_ingredients`, linkData);
+        const response = await axios.put(`${apiBaseUrl}/expiry_dates/${id}`, expiryData);
         return response.data;
     } catch (error) {
-        console.error("Error linking recipe with ingredient:", error);
+        console.error("Error updating expiry date:", error);
         throw error;
     }
 };
 
-// Unlink a recipe from an ingredient
-export const removeRecipeIngredientLink = async (linkData) => {
+// Remove an expiry date
+export const removeExpiryDate = async (id) => {
     try {
-        await axios.delete(`${apiBaseUrl}/recipes_has_ingredients`, { data: linkData });
+        await axios.delete(`${apiBaseUrl}/expiry_dates/${id}`);
+        return { message: "Expiry date deleted successfully" }; 
     } catch (error) {
-        console.error("Error unlinking recipe from ingredient:", error);
+        console.error("Error deleting expiry date:", error);
         throw error;
     }
 };
@@ -124,11 +145,12 @@ export default {
     addIngredient,
     editIngredient,
     removeIngredient,
-    //delete stock 
     getStock,
     addStock,
+    removeStock,
+    editStock,
     getExpiryDates,
     addExpiryDate,
-    addRecipeIngredientLink,
-    removeRecipeIngredientLink,
+    removeExpiryDate,
+    editExpiryDate
 };

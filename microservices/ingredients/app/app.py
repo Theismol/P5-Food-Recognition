@@ -4,6 +4,8 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy.ext.declarative import declarative_base
 
 load_dotenv()
 
@@ -34,39 +36,36 @@ db = SQLAlchemy(app)
 
 # TABLES BASED ON THE STRUCTURE SEEN IN THE DATABASE
 class Ingredient(db.Model):
-    __tablename__ = 'Ingredients'  # Table name is now correctly set
-    id = db.Column(db.Integer, primary_key=True)
-    ingredient = db.Column(db.String(45), nullable=False)  # Column name
-    category = db.Column(db.String(45))
-    stock = db.relationship('Stock', backref='ingredient', lazy=True)
-    expiry_date = db.relationship('ExpiryDate', backref='ingredient', lazy=True)
+    __tablename__ = 'Ingredients'
     
-class Stock(db.Model):
-    __tablename__ = 'Stock'
-    id = db.Column(db.Integer, primary_key=True)
-    ingredient_id = db.Column(db.Integer, db.ForeignKey('Ingredients.id'), nullable=False)
-    Amount = db.Column(db.Integer, nullable=False)  
-    Unit = db.Column(db.String(7), nullable=False)  
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    Ingredient = db.Column(db.String(45), nullable=False)
+    Category = db.Column(db.String(45), db.ForeignKey('Expiry_dates.Category')) 
 
 class ExpiryDate(db.Model):
     __tablename__ = 'Expiry_dates'
-    id = db.Column(db.Integer, primary_key=True)
-    Expiry = db.Column(db.Integer, nullable=False)
-    Category = db.Column(db.String(45), nullable=True)
-    #ingredient_id = db.Column(db.Integer, db.ForeignKey('Ingredients.id'))
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    Expiry = db.Column(db.Integer, nullable=True)
+    Category = db.Column(db.String(45), unique=True, nullable=False)  # Unique constraint on Category
+    
+    #Relationship back to Ingredient
+    Ingredients = db.relationship('Ingredient', backref='expiry_category', lazy=True)
 
-# Dette skal nok være over i recipes app.py
-class RecipesHasIngredients(db.Model):
-    __tablename__ = 'recipes_has_ingredients'
-    Recipes_id = db.Column(db.Integer, db.ForeignKey('Recipes.id'), primary_key=True)
-    Ingredients_id = db.Column(db.Integer, db.ForeignKey('Ingredients.id'), primary_key=True)
-    Amount = db.Column(db.Numeric(10, 2), nullable=False) 
-    Unit = db.Column(db.String(20), nullable=False)
+class Stock(db.Model):
+    __tablename__ = 'Stock'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    Ingredient_id = db.Column(db.Integer, db.ForeignKey('Ingredients.id'), nullable=True)  # Foreign key to Ingredients
+    Amount = db.Column(db.Integer, nullable=True)  
+    Unit = db.Column(db.String(7), nullable=True)  
 
+    #Relationship back to Ingredient
+    Ingredient = db.relationship('Ingredient', backref='stock_entries', lazy=True)
 
 # Helper function for validating ingredient data
 def validate_ingredient_data(data):
-    required_fields = ["ingredient", "category"]
+    required_fields = ["Ingredient", "Category"]
     for field in required_fields:
         if field not in data:
             raise ValueError(f"Missing required field: {field}")
@@ -74,24 +73,23 @@ def validate_ingredient_data(data):
 
 
 # CRUD Endpoints
-# Ingredients Endpoints
 @app.route('/ingredients', methods=['GET'])
 def get_ingredients():
     ingredients = Ingredient.query.all()
     return jsonify([{
         'id': ing.id,
-        'ingredient': ing.ingredient,  # Reflects the actual column name
-        'category': ing.category
+        'Ingredient': ing.Ingredient, 
+        'Category': ing.Category  
     } for ing in ingredients])
 
 @app.route('/ingredients', methods=['POST'])
 def add_ingredient():
     data = request.get_json()
     try:
-        validate_ingredient_data(data)
+        validate_ingredient_data(data)  
         new_ingredient = Ingredient(
-            ingredient=data['ingredient'],  # Reflects the actual column name
-            category=data['category']
+            Ingredient=data['Ingredient'],  
+            Category=data['Category'] 
         )
         db.session.add(new_ingredient)
         db.session.commit()
@@ -110,8 +108,8 @@ def edit_ingredient(id):
         if not ingredient:
             return jsonify({"error": "Ingredient not found"}), 404
 
-        ingredient.ingredient = data['ingredient']  # Reflects the actual column name
-        ingredient.category = data['category']
+        ingredient.Ingredient = data['Ingredient']  
+        ingredient.Category = data['Category']  
         db.session.commit()
         return jsonify({"message": "Ingredient updated successfully"}), 200
     except ValueError as e:
@@ -131,28 +129,60 @@ def remove_ingredient(id):
     except Exception as e:
         return jsonify({"error": "Failed to delete ingredient"}), 500
 
+
 # Stock Endpoints
 @app.route('/stock', methods=['GET'])
 def get_stock():
     stock_items = Stock.query.all()
     return jsonify([{
         'id': stock.id,
-        'ingredient_id': stock.ingredient_id,
-        'Amount': stock.Amount, 
-        'Unit': stock.Unit       
+        'Ingredient_id': stock.Ingredient_id, 
+        'Amount': stock.Amount,  
+        'Unit': stock.Unit  
     } for stock in stock_items])
 
 @app.route('/stock', methods=['POST'])
 def add_stock():
     data = request.get_json()
-    new_stock = Stock(
-        ingredient_id=data['ingredient_id'],
-        Amount=data['Amount'], 
-        Unit=data['Unit']      
-    )
-    db.session.add(new_stock)
-    db.session.commit()
-    return jsonify({"message": "Stock added successfully"}), 201
+    try:
+        new_stock = Stock(
+            Ingredient_id=data['Ingredient_id'], 
+            Amount=data['Amount'],
+            Unit=data['Unit']  
+        )
+        db.session.add(new_stock)
+        db.session.commit()
+        return jsonify({"message": "Stock added successfully"}), 201
+    except Exception as e:
+        return jsonify({"error": "Failed to add stock"}), 500
+
+@app.route('/stock/<int:id>', methods=['PUT'])
+def edit_stock(id):
+    data = request.get_json()
+    try:
+        stock = Stock.query.get(id)
+        if not stock:
+            return jsonify({"error": "Stock item not found"}), 404
+
+        stock.Ingredient_id = data['Ingredient_id']  
+        stock.Amount = data['Amount']  
+        stock.Unit = data['Unit']  
+        db.session.commit()
+        return jsonify({"message": "Stock updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to update stock"}), 500
+
+@app.route('/stock/<int:id>', methods=['DELETE'])
+def remove_stock(id):
+    stock = Stock.query.get(id)
+    if not stock:
+        return jsonify({"error": "Stock item not found"}), 404
+    try:
+        db.session.delete(stock)
+        db.session.commit()
+        return jsonify({"message": "Stock deleted successfully"}), 204
+    except Exception as e:
+        return jsonify({"error": "Failed to delete stock"}), 500
 
 # Expiry Date Endpoints
 @app.route('/expiry_dates', methods=['GET'])
@@ -160,62 +190,47 @@ def get_expiry_dates():
     dates = ExpiryDate.query.all()
     return jsonify([{
         'id': date.id,
-        'expiry': date.Expiry,
-        'category': date.Category
+        'Expiry': date.Expiry,
+        'Category': date.Category  
     } for date in dates])
 
 @app.route('/expiry_dates', methods=['POST'])
 def add_expiry_date():
     data = request.get_json()
     new_date = ExpiryDate(
-        Expiry=data['expiry'],
-        Category=data['category'],
-        ingredient_id=data['ingredient_id']
+        Expiry=data['Expiry'],  
+        Category=data['Category'],
+        # ingredient_id=data.get('ingredient_id')  # Uncomment if ingredient_id is part of the payload
     )
     db.session.add(new_date)
     db.session.commit()
     return jsonify({"message": "Expiry date added successfully"}), 201
 
-
-@app.route('/recipes_has_ingredients', methods=['POST'])
-def add_recipe_ingredient():
+@app.route('/expiry_dates/<int:id>', methods=['PUT'])
+def edit_expiry_date(id):
     data = request.get_json()
-    
-    # Ensure that the required fields are present
-    if not all(key in data for key in ('Recipes_id', 'Ingredients_id', 'Amount', 'Unit')):
-        return jsonify({"error": "Missing required fields"}), 400
+    expiry_date = ExpiryDate.query.get(id)
+    if not expiry_date:
+        return jsonify({"error": "Expiry date not found"}), 404
 
-    new_link = RecipesHasIngredients(
-        Recipes_id=data['Recipes_id'],
-        Ingredients_id=data['Ingredients_id'],
-        Amount=data['Amount'],
-        Unit=data['Unit']     
-    )
-    
-    db.session.add(new_link)
+    # Update the fields with the incoming data
+    expiry_date.Expiry = data.get('Expiry', expiry_date.Expiry)  # Use current value if not provided
+    expiry_date.Category = data.get('Category', expiry_date.Category)  # Use current value if not provided
+
     db.session.commit()
-    return jsonify({"message": "Recipe-ingredient link added successfully"}), 201
+    return jsonify({"message": "Expiry date updated successfully"}), 200
 
-@app.route('/recipes_has_ingredients', methods=['DELETE'])
-def remove_recipe_ingredient():
-    data = request.get_json()
-    
-    # Ensure that the required fields are present
-    if not all(key in data for key in ('Recipes_id', 'Ingredients_id')):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    link = RecipesHasIngredients.query.filter_by(
-        Recipes_id=data['Recipes_id'],
-        Ingredients_id=data['Ingredients_id']
-    ).first()
-
-    if not link:
-        return jsonify({"error": "Recipe-ingredient link not found"}), 404
-    
-    db.session.delete(link)
-    db.session.commit()
-    return jsonify({"message": "Recipe-ingredient link deleted successfully"}), 204
-
+@app.route('/expiry_dates/<int:id>', methods=['DELETE'])
+def remove_expiry_date(id):
+    expiry_date = ExpiryDate.query.get(id)
+    if not expiry_date:
+        return jsonify({"error": "Expiry date not found"}), 404
+    try:
+        db.session.delete(expiry_date)
+        db.session.commit()
+        return jsonify({"message": "Expiry date deleted successfully"}), 204
+    except Exception as e:
+        return jsonify({"error": "Failed to delete expiry date"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
