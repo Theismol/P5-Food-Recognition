@@ -8,10 +8,14 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 const darkTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#C0B9DD',
       contrastText: '#000000', // Default text color
+    },
+    secondary: {
+      main: "#75c9c8",
+      contrastText: "#000000"
     },
     background: {
       default: '#F7F7F8',
