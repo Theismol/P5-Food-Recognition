@@ -139,7 +139,7 @@ function Ingredients() {
                                         onChange={handleEditSelectedIngredient}
                                         fullWidth
                                         margin="normal"
-                                        InputProps={{ inputProps: { min: 0 } }} // Optional: Prevent negative numbers
+                                        InputProps={{ inputProps: { min: 0 } }} 
                                     />)
                                     : (<Typography variant="body1">
                                         Quantity: {ingredient.quantity} {ingredient.unit}
