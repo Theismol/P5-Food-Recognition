@@ -12,41 +12,60 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
 
-
-const drawerHeight = 54; // Adjust the height as needed
-
-const initialIngredients = [
-    { name: 'Tomato', quantity: 3, unit: 'Pcs', expiry: '2024-11-01', daysInStock: 10 },
-    { name: 'Milk', quantity: 1, unit: 'Liter', expiry: '2024-10-20', daysInStock: 5 },
-    { name: 'Eggs', quantity: 12, unit: 'Pcs', expiry: '2024-10-18', daysInStock: 7 },
-    { name: 'Butter', quantity: 200, unit: 'Gram', expiry: '2024-12-15', daysInStock: 15 },
-];
+const drawerHeight = 54;
+const backendUrl = "http://localhost:5000";
 
 function Ingredients() {
     const [sortOption, setSortOption] = useState('');
-    const [sortedIngredients, setSortedIngredients] = useState(initialIngredients);
+    const [sortedIngredients, setSortedIngredients] = useState([]);
     const [selectedIngredient, setSelectedIngredient] = useState(null);
+    const [originalValues, setOriginalValues] = useState(null); // Track original values
+
+    // Fetch ingredients from the backend
+    const fetchIngredients = async () => {
+        try {
+            const response = await fetch(`${backendUrl}/stock`);
+            const data = await response.json();
+
+            setSortedIngredients(data);
+        } catch (error) {
+            console.error("Error fetching ingredients:", error);
+        }
+    };
+
     useEffect(() => {
         fetchIngredients();
-    })
+        
+        // Periodic refresh every 24 hours
+        const interval = setInterval(() => {
+            fetchIngredients();
+        }, 86400000);
+
+        return () => clearInterval(interval);  // Cleanup on unmount
+    }, []);  // Empty dependency array to call only on mount
+
+    // Handle sorting based on user selection
     const handleChangeSort = (event) => {
         const sortValue = event.target.value;
         setSortOption(sortValue);
 
-        let sorted = [...initialIngredients];
+        let sorted = [...sortedIngredients];
         if (sortValue === 'Quantity') {
-            // Sort by quantity in descending order
-            sorted.sort((a, b) => b.quantity - a.quantity);
+            sorted.sort((a, b) => b.Amount - a.Amount);
         } else if (sortValue === 'Expiry') {
-            // Sort by expiry date in ascending order (nearest expiry first)
-            sorted.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+            sorted.sort((a, b) => new Date(a.Expiry_date) - new Date(b.Expiry_date));
         }
 
         setSortedIngredients(sorted);
     };
+
+    // Start editing an ingredient (triggered by clicking "Edit")
     const handleEditIngredient = (ingredient) => {
-        setSelectedIngredient(ingredient)
-    }
+        setSelectedIngredient(ingredient);
+        setOriginalValues({ ...ingredient }); // Save original values when editing starts
+    };
+
+    // Handle changes in the input fields for editing
     const handleEditSelectedIngredient = (e) => {
         const { name, value } = e.target;
         setSelectedIngredient((prev) => ({
@@ -54,31 +73,77 @@ function Ingredients() {
             [name]: value,
         }));
     };
+
+    // Format date to 'YYYY-MM-DD'
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        return date.toISOString().split('T')[0];
     };
-    const handleSaveIngredient = () => {
-        const { name, quantity, expiry } = selectedIngredient;
-        //Axios call backend to update stock for this ingredient
-        fetchIngredients();
-        return
-    }
 
-    const fetchIngredients = () => {
-        //Call backend to get ingredients for this site
-        return
-    }
+    // Save or update the ingredient's stock data in the backend
+    const handleSaveIngredient = async () => {
+        if (!selectedIngredient || !originalValues) return;
+
+        const { id, Amount, Expiry_date } = selectedIngredient;
+
+        // Create an object to store only the fields that have been modified
+        const updatedStock = {};
+
+        // Compare current values with original values and add only the changed fields
+        if (Amount !== originalValues.Amount) {
+            updatedStock.Amount = Amount;
+        }
+        if (Expiry_date !== originalValues.Expiry_date) {
+            updatedStock.Expiry_date = Expiry_date;
+        }
+
+        // If no fields have been modified, skip the update
+        if (Object.keys(updatedStock).length === 0) {
+            console.log("No changes to save.");
+            setSelectedIngredient(null);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${backendUrl}/stock/${id}`, {
+                method: 'PUT',  // Use PUT for updating
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedStock),
+            });
+
+            if (response.ok) {
+                console.log("Stock updated successfully");
+                fetchIngredients();  // Refresh the ingredients list after saving/updating
+
+                // Reset selectedIngredient and originalValues to return to the initial state
+                setSelectedIngredient(null);
+                setOriginalValues(null);
+            } else {
+                console.error("Failed to save stock:", await response.json());
+            }
+        } catch (error) {
+            console.error("Error saving ingredient:", error);
+        }
+    };
+
+    // Format Days_in_Stock for display
+    const formatDaysInStock = (days) => {
+        if (days < 0) return "Expired";
+        return `${days} days`;
+    };
+
     return (
         <Box sx={{ minWidth: 200, margin: 2 }}>
             <Navbar />
             <FormControl
                 fullWidth
                 sx={{
-                    width: 200, // Adjust the width of the dropdown menu
-                    position: 'absolute', // Position it absolutely within its parent container
-                    right: 50, // Distance from the right edge
-                    top: drawerHeight + 30, // Position it below the drawer
+                    width: 200,
+                    position: 'absolute',
+                    right: 50,
+                    top: drawerHeight + 30,
                     zIndex: 10,
                 }}
             >
@@ -90,18 +155,18 @@ function Ingredients() {
                     label="Sort By"
                     onChange={handleChangeSort}
                     sx={{
-                        bgcolor: '#75c9c8', // Background color for the Select component
+                        bgcolor: '#75c9c8',
                         '&.Mui-focused': {
-                            bgcolor: '#75c9c8', // Maintain background color when focused
+                            bgcolor: '#75c9c8',
                         },
                         '&:hover': {
-                            bgcolor: '#75c9c8', // Maintain background color on hover
+                            bgcolor: '#75c9c8',
                         },
                     }}
                     MenuProps={{
                         PaperProps: {
                             sx: {
-                                bgcolor: '#75c9c8', // Background color for dropdown
+                                bgcolor: '#75c9c8',
                             },
                         },
                     }}
@@ -110,7 +175,6 @@ function Ingredients() {
                     <MenuItem value="Quantity">Quantity</MenuItem>
                 </Select>
             </FormControl>
-
 
             <Box sx={{ padding: 4, marginTop: 15 }}>
                 <Grid container spacing={2} columns={12}>
@@ -121,51 +185,70 @@ function Ingredients() {
                                     border: '1px solid #ccc',
                                     borderRadius: 2,
                                     padding: 2,
-                                    backgroundColor: '#c0b9dd', // Restored background color
-                                    color: '#000000', // Ensure text is black
+                                    backgroundColor: '#c0b9dd',
+                                    color: '#000000',
                                     boxShadow: 1,
                                     position: 'relative'
                                 }}
                             >
                                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                    {ingredient.name}
+                                    {ingredient.Ingredient}
                                 </Typography>
-                                {selectedIngredient && selectedIngredient.name === ingredient.name
-                                    ? (<TextField
-                                        label="Quantity"
-                                        name="quantity"
-                                        type="number"
-                                        value={selectedIngredient.quantity}
-                                        onChange={handleEditSelectedIngredient}
-                                        fullWidth
-                                        margin="normal"
-                                        InputProps={{ inputProps: { min: 0 } }} 
-                                    />)
-                                    : (<Typography variant="body1">
-                                        Quantity: {ingredient.quantity} {ingredient.unit}
-                                    </Typography>)}
-                                {selectedIngredient && selectedIngredient.name === ingredient.name
-                                    ? (<TextField
-                                        label="Expiry"
-                                        name="expiry"
-                                        type="date" // Date type for expiry
-                                        value={formatDate(selectedIngredient.expiry)}
-                                        onChange={handleEditSelectedIngredient}
-                                        fullWidth
-                                        margin="normal"
-                                        InputLabelProps={{ shrink: true }} // Keep the label shrunk for date input
-                                    />)
-                                    :
-                                    (<Typography variant="body1">
-                                        Expiry: {formatDate(ingredient.expiry)}
-                                    </Typography>
+                                {selectedIngredient && selectedIngredient.id === ingredient.id
+                                    ? (
+                                        <>
+                                            {/* Editable fields */}
+                                            <TextField
+                                                label="Quantity"
+                                                name="Amount"
+                                                type="number"
+                                                value={selectedIngredient.Amount}
+                                                onChange={handleEditSelectedIngredient}
+                                                fullWidth
+                                                margin="normal"
+                                                InputProps={{ inputProps: { min: 0 } }}
+                                            />
+                                            <TextField
+                                                label="Expiry"
+                                                name="Expiry_date"
+                                                type="date"
+                                                value={formatDate(selectedIngredient.Expiry_date)}
+                                                onChange={handleEditSelectedIngredient}
+                                                fullWidth
+                                                margin="normal"
+                                                InputLabelProps={{ shrink: true }}
+                                            />
+                                        </>
+                                    )
+                                    : (
+                                        <>
+                                            {/* Non-editable fields */}
+                                            <Typography variant="body1">
+                                                Quantity: {ingredient.Amount} {ingredient.Unit}
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Expiry: {formatDate(ingredient.Expiry_date)}
+                                            </Typography>
+                                        </>
                                     )}
                                 <Typography variant="body1">
-                                    Days in Stock: {ingredient.daysInStock}
+                                    Days in Stock: {formatDaysInStock(ingredient.Days_in_Stock)}
                                 </Typography>
-                                {selectedIngredient && selectedIngredient.name === ingredient.name
-                                    && (<Button variant="contained" color="secondary" sx={{ position: 'absolute', bottom: 5, right: 5 }} onClick={handleSaveIngredient}>Save</Button>)}
-                                <IconButton sx={{ position: 'absolute', top: 0, right: 0, color: '#000000' }} onClick={() => handleEditIngredient(ingredient)}>
+                                {selectedIngredient && selectedIngredient.id === ingredient.id
+                                    && (
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            sx={{ position: 'absolute', bottom: 5, right: 5 }}
+                                            onClick={handleSaveIngredient}
+                                        >
+                                            Save
+                                        </Button>
+                                    )}
+                                <IconButton
+                                    sx={{ position: 'absolute', top: 0, right: 0, color: '#000000' }}
+                                    onClick={() => handleEditIngredient(ingredient)}
+                                >
                                     <EditIcon />
                                 </IconButton>
                             </Box>
@@ -173,7 +256,7 @@ function Ingredients() {
                     ))}
                 </Grid>
             </Box>
-        </Box >
+        </Box>
     );
 }
 
