@@ -36,17 +36,4 @@ app.use('/api/recipe', recipeRoutes);
 // Export the app for testing
 export default app;
 
-/* Start the server after connecting to the database
-const startServer = async () => {
-    try {
-        await connectToDatabase(); // Ensure the database connection is established
-        app.listen(port, () => {
-            console.log(`App listening on port ${port}`);
-        });
-    } catch (error) {
-        console.error('Failed to start the server due to database connection issue:', error);
-    }
-};
 
-// Start the server
-startServer(); */
