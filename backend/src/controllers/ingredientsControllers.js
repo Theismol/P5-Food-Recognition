@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API endpoint where the flask app (ingredient) is running
-const apiBaseUrl = 'http://127.0.0.1:5000'; // Base URL of ingredients microservice
+const apiBaseUrl = 'http://127.0.0.1:3000'; // Base URL of ingredients microservice
 
 // Ingredients Service Functions
 
@@ -16,41 +16,8 @@ export const getIngredients = async () => {
     }
 };
 
-// Add a new ingredient
-export const addIngredient = async (ingredientData) => {
-    try {
-        const response = await axios.post(`${apiBaseUrl}/ingredients`, ingredientData);
-        return response.data;
-    } catch (error) {
-        console.error("Error adding ingredient:", error);
-        throw error;
-    }
-};
-
-// Edit an existing ingredient
-export const editIngredient = async (id, updatedData) => {
-    try {
-        const response = await axios.put(`${apiBaseUrl}/ingredients/${id}`, updatedData); 
-        return response.data;
-    } catch (error) {
-        console.error("Error editing ingredient:", error);
-        throw error;
-    }
-};
-
-// Remove an ingredient
-export const removeIngredient = async (id) => {
-    try {
-        await axios.delete(`${apiBaseUrl}/ingredients/${id}`); 
-    } catch (error) {
-        console.error("Error removing ingredient:", error);
-        throw error;
-    }
-};
-
-// Stock Service Functions
-
-// Fetch all stock entries
+// Stock API Functions
+// Fetch all stock
 export const getStock = async () => {
     try {
         const response = await axios.get(`${apiBaseUrl}/stock`);
@@ -61,7 +28,7 @@ export const getStock = async () => {
     }
 };
 
-// Add new stock
+// Add a new stock entry
 export const addStock = async (stockData) => {
     try {
         const response = await axios.post(`${apiBaseUrl}/stock`, stockData);
@@ -72,7 +39,7 @@ export const addStock = async (stockData) => {
     }
 };
 
-// Edit existing stock
+// Edit existing stock by ID
 export const editStock = async (id, stockData) => {
     try {
         const response = await axios.put(`${apiBaseUrl}/stock/${id}`, stockData);
@@ -87,25 +54,14 @@ export const editStock = async (id, stockData) => {
 export const removeStock = async (id) => {
     try {
         const response = await axios.delete(`${apiBaseUrl}/stock/${id}`);
-        return response.data; 
+        return response.data;
     } catch (error) {
         console.error("Error removing stock:", error);
         throw error;
     }
 };
 
-//Expiry Date Service Functions
-
-// Fetch all expiry dates
-export const getExpiryDates = async () => {
-    try {
-        const response = await axios.get(`${apiBaseUrl}/expiry_dates`);
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching expiry dates:", error);
-        throw error;
-    }
-};
+// Expiry Dates API Functions
 
 // Add a new expiry date
 export const addExpiryDate = async (expiryData) => {
@@ -118,7 +74,7 @@ export const addExpiryDate = async (expiryData) => {
     }
 };
 
-// Update an existing expiry date
+// Edit an existing expiry date
 export const editExpiryDate = async (id, expiryData) => {
     try {
         const response = await axios.put(`${apiBaseUrl}/expiry_dates/${id}`, expiryData);
@@ -132,24 +88,18 @@ export const editExpiryDate = async (id, expiryData) => {
 // Remove an expiry date
 export const removeExpiryDate = async (id) => {
     try {
-        await axios.delete(`${apiBaseUrl}/expiry_dates/${id}`);
-        return { message: "Expiry date deleted successfully" }; 
+        const response = await axios.delete(`${apiBaseUrl}/expiry_dates/${id}`);
+        return { message: "Expiry date deleted successfully" };
     } catch (error) {
         console.error("Error deleting expiry date:", error);
         throw error;
     }
 };
-
 export default {
-    getIngredients,
-    addIngredient,
-    editIngredient,
-    removeIngredient,
     getStock,
     addStock,
     removeStock,
     editStock,
-    getExpiryDates,
     addExpiryDate,
     removeExpiryDate,
     editExpiryDate
