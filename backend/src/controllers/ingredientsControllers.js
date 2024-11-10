@@ -96,6 +96,7 @@ export const removeExpiryDate = async (id) => {
     }
 };
 export default {
+    getIngredients,
     getStock,
     addStock,
     removeStock,

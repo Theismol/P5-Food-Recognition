@@ -46,12 +46,28 @@ class RecipeIngredient(db.Model):
     Amount = db.Column(db.Numeric(10, 2), nullable=True)
     unit = db.Column(db.String(20), nullable=True)
 
+class Ingredient(db.Model):
+    __tablename__ = 'Ingredients'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    Ingredient = db.Column(db.String(45), nullable=False)
+    Category = db.Column(db.String(45), db.ForeignKey('Expiry_dates.Category'))  # Foreign key to Expiry_dates
+    Unit = db.Column(db.String(45), nullable=False)
+
+class ExpiryDate(db.Model):
+    __tablename__ = 'Expiry_dates'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    Expiry = db.Column(db.Integer, nullable=True)  # Assuming expiry is a number of days
+    Category = db.Column(db.String(45), unique=True, nullable=False)
+    Ingredients = db.relationship('Ingredient', backref='expiry_category', lazy=True)
+
 class Stock(db.Model):
     __tablename__ = 'Stock'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Ingredient_id = db.Column(db.Integer, db.ForeignKey('Ingredients.id'), nullable=True)
     Amount = db.Column(db.Integer, nullable=True)
-    Unit = db.Column(db.String(7), nullable=True)
+    Expiry_date = db.Column(db.Date, nullable=True)
+    Days_in_Stock = db.Column(db.Integer, nullable=True)
+    Ingredient = db.relationship('Ingredient', backref='stock_entries', lazy=True)
 
 # Function to generate recipes based on diet preferences
 @app.route('/generate-recipes', methods=['POST'])
@@ -80,16 +96,16 @@ def generate_recipes():
         # Collect recipe details
         recipe_details = []
         for recipe in available_recipes:
-            ingredients = RecipeIngredient.query.filter_by(Recipes_id=recipe.id).all()
+            ingredients = db.session.query(RecipeIngredient, Ingredient).join(Ingredient, RecipeIngredient.Ingredients_id == Ingredient.id).filter(RecipeIngredient.Recipes_id == recipe.id).all()
             ingredients_info = []
 
             # Check if ingredients are available in stock
             useable_ingredients = True
-            for ingredient in ingredients:
+            for ingredient, ingredient_details in ingredients:
                 stock_item = Stock.query.filter_by(Ingredient_id=ingredient.Ingredients_id).first()
                 if stock_item and stock_item.Amount >= ingredient.Amount:
                     ingredients_info.append({
-                        "Ingredient": ingredient.Ingredients_id,
+                        "Ingredient": ingredient_details.Ingredient,
                         "Amount": ingredient.Amount,
                         "unit": ingredient.unit,
                     })
@@ -127,19 +143,34 @@ def choose_recipe():
             return jsonify({"error": "Recipe not found"}), 404
 
         # Fetch related ingredients for the chosen recipe
-        ingredients = RecipeIngredient.query.filter_by(Recipes_id=recipe.id).all()
+        ingredients = db.session.query(RecipeIngredient, Ingredient).join(Ingredient, RecipeIngredient.Ingredients_id == Ingredient.id).filter(RecipeIngredient.Recipes_id == recipe.id).all()
         ingredients_info = []
 
-        # Collect ingredient details
-        for ingredient in ingredients:
+        # Collect ingredient details and update stock
+        for ingredient, ingredient_details in ingredients:
             stock_item = Stock.query.filter_by(Ingredient_id=ingredient.Ingredients_id).first()
-            ingredients_info.append({
-                "Ingredient": ingredient.Ingredients_id,
-                "Amount": ingredient.Amount,
-                "unit": ingredient.unit,
-                "AvailableInStock": stock_item.Amount if stock_item else 0,
-            })
 
+            if stock_item and stock_item.Amount >= ingredient.Amount:
+                # Check if enough stock is available
+                stock_item.Amount -= ingredient.Amount  # Deduct the used amount
+                db.session.commit()  # Commit the changes to the stock
+
+                ingredients_info.append({
+                    "Ingredient": ingredient_details.Ingredient,
+                    "Amount": ingredient.Amount,
+                    "unit": ingredient.unit,
+                    "AvailableInStock": stock_item.Amount,  # After deduction
+                })
+            else:
+                ingredients_info.append({
+                    "Ingredient": ingredient_details.Ingredient,
+                    "Amount": ingredient.Amount,
+                    "unit": ingredient.unit,
+                    "AvailableInStock": stock_item.Amount if stock_item else 0,
+                    "error": "Insufficient stock",  # Flag if stock is not enough
+                })
+
+        # Return the recipe details with updated ingredient stock
         response_data = {
             "RecipeID": recipe.id,
             "RecipeName": recipe.RecipeName,
@@ -154,4 +185,4 @@ def choose_recipe():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=4000)
+    app.run(host='0.0.0.0', port=2000)

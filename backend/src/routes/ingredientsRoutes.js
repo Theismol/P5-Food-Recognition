@@ -4,7 +4,7 @@ import ingredientsControllers from '../controllers/ingredientsControllers.js';
 const router = express.Router();
 
 // Ingredient Endpoints
-router.get('/', ingredientsControllers.getIngredients);  // Matches GET /ingredients
+router.get('/ingredients', ingredientsControllers.getIngredients);  // Matches GET /ingredients
 
 // Stock Endpoints
 router.get('/stock', ingredientsControllers.getStock);  // Matches GET /stock

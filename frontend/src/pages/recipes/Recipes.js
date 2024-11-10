@@ -8,55 +8,64 @@ import Navbar from '../components/Navbar';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 import { Checkbox, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import axios from 'axios';
 
 const drawerHeight = 54; // Adjust the height as needed
-const recipes = [
-    { name: 'Chicken Tikka Masala', diet: ["Gluten free"], ingredients: ["Chicken", "Spices", "Tomato sauce"], instructions: "Cook chicken with spices, add tomato sauce and simmer." },
-    { name: 'Vegetable Lasagna', diet: ["Vegetarian"], ingredients: ["Lasagna noodles", "Vegetables", "Cheese"], instructions: "Layer noodles with vegetables and cheese, then bake." },
-    { name: 'Cabbage Stir Fry', diet: ["Vegan", "Vegetarian", "Dairy free"], ingredients: ["Cabbage", "Carrots", "Soy sauce"], instructions: "Stir-fry cabbage and carrots with soy sauce." },
-    { name: 'Spaghetti Carbonara', diet: [""], ingredients: ["Spaghetti", "Eggs", "Bacon", "Parmesan"], instructions: "Cook pasta, mix with eggs and bacon, and serve with Parmesan." },
-];
+const dietaryRestrictionsChoices = ["Vegetarian", "Gluten free", "Dairy free", "Vegan"];
 
-const dietaryRestrictionsChoices = ["Vegetarian", "Gluten free", "Dairy free", "Vegan"]
 function Recipes() {
-    const [dietaryRestrictions, setDietaryRestrictions] = React.useState([]);
+    const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
     const [open, setOpen] = useState(false);
     const [selectedRecipe, setSelectedRecipe] = useState(null);
-    const handleChange = (event) => {
+    const [availableRecipes, setAvailableRecipes] = useState([]);
 
+    const handleChange = (event) => {
         const {
             target: { value },
         } = event;
         setDietaryRestrictions(
-            // On autofill we get a stringified value.
             typeof value === 'string' ? value.split(',') : value,
         );
     };
-    const onGenerateRecipes = () => {
-        //Axios call til backend der henter recipes ned
-        return
-    }
+
+    const handleGenerateRecipes = async () => {
+        try {
+            const response = await axios.post('http://localhost:2000/generate-recipes', { dietPreferences: dietaryRestrictions });
+            setAvailableRecipes(response.data.recipes || []);
+        } catch (error) {
+            console.error('Error fetching recipes:', error);
+        }
+    };
+
     const handleMakeRecipe = (recipe) => {
         setSelectedRecipe(recipe);
         setOpen(true);
-        return
-    }
+    };
+
     const handleClose = () => {
         setOpen(false);
         setSelectedRecipe(null);
-    }
-    const handleRecipeDone = () => {
-        //Axios request to delete the ingredients from stock
-        handleClose();
-    }
+    };
 
+    const handleRecipeDone = async () => {
+        if (selectedRecipe) {
+            try {
+                await axios.post('http://localhost:2000/choose-recipe', { recipeID: selectedRecipe.RecipeID });
+                // Refresh the available recipes
+                await handleGenerateRecipes();
+                handleClose();
+            } catch (error) {
+                console.error('Error choosing recipe:', error);
+            }
+        }
+    };
 
     return (
         <Box sx={{ minWidth: 200 }}>
             <Navbar />
             <Button
                 variant="contained"
-                onClick={onGenerateRecipes} // Function to generate recipes
+                onClick={handleGenerateRecipes} // Function to generate recipes
                 sx={{
                     position: 'absolute',
                     right: 250,
@@ -118,8 +127,8 @@ function Recipes() {
             </FormControl>
             <Box sx={{ padding: 4, marginTop: 15 }}>
                 <Grid container spacing={2} columns={12}>
-                    {recipes.map((recipe, index) => (
-                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} sx={{ position: "relative" }}>
+                    {availableRecipes.map((recipe, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index} sx={{ position: "relative" }}>
                             <Box
                                 sx={{
                                     border: '1px solid #ccc',
@@ -131,12 +140,12 @@ function Recipes() {
                                 }}
                             >
                                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                    {recipe.name}
+                                    {recipe.RecipeName}
                                 </Typography>
                                 <Typography variant="body1">
                                     Dietary restrictions:
-                                    {recipe.diet.map((diet) => (
-                                        <Typography variant="body2">
+                                    {(recipe.diet || []).map((diet, dietIndex) => (
+                                        <Typography key={dietIndex} variant="body2">
                                             {"- " + diet}
                                         </Typography>
                                     ))}
@@ -148,24 +157,23 @@ function Recipes() {
                 </Grid>
             </Box>
             <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>{selectedRecipe?.name}</DialogTitle>
+                <DialogTitle>{selectedRecipe?.RecipeName}</DialogTitle>
                 <DialogContent>
                     <Typography variant="h6">Ingredients:</Typography>
-                    {selectedRecipe?.ingredients.map((ingredient, index) => (
+                    {(selectedRecipe?.Ingredients || []).map((ingredient, index) => (
                         <Typography key={index} variant="body2">
-                            - {ingredient}
+                            - {ingredient.Ingredient} - {ingredient.Amount} {ingredient.unit}
                         </Typography>
                     ))}
                     <Typography variant="h6" sx={{ mt: 2 }}>Instructions:</Typography>
-                    <Typography variant="body2">{selectedRecipe?.instructions}</Typography>
+                    <Typography variant="body2">{selectedRecipe?.Instructions}</Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleRecipeDone} sx={{ bgcolor: "#75c9c8" }}>Recipe finished!</Button>
                     <Button onClick={handleClose} sx={{ bgcolor: "#75c9c8" }}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </Box >
-
+        </Box>
     );
 }
 
