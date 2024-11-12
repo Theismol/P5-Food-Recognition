@@ -1,5 +1,3 @@
-const port = 4000;
-const app = express();
 import express from 'express';
 import cors from 'cors';
 const router = express.Router();
@@ -9,6 +7,9 @@ import homeRoutes from './src/routes/homeRoutes.js'
 //const exampleRoute = require('path_to_your_routes.js')
 
 import recipeRoutes from './src/routes/recipeRoutes.js';
+
+const port = 4000;
+const app = express();
 
 app.use(cors({
     origin: true,
