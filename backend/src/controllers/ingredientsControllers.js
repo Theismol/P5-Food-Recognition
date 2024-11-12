@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API endpoint where the flask app (ingredient) is running
-const apiBaseUrl = 'http://127.0.0.1:3000'; // Base URL of ingredients microservice
+const apiBaseUrl = 'http://localhost:5000'; // Base URL of ingredients microservice
 
 // Ingredients Service Functions
 

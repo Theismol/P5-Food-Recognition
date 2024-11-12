@@ -49,8 +49,8 @@ class ExpiryDate(db.Model):
     __tablename__ = 'Expiry_dates'
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    Expiry = db.Column(db.Integer, nullable=True)  # Assuming expiry is a number of days
-    Category = db.Column(db.String(45), unique=True, nullable=False)  # Unique constraint on Category
+    Expiry = db.Column(db.Integer, nullable=True) 
+    Category = db.Column(db.String(45), unique=True, nullable=False)  
     
     # Relationship back to Ingredient
     Ingredients = db.relationship('Ingredient', backref='expiry_category', lazy=True)
@@ -62,15 +62,16 @@ class Stock(db.Model):
     Ingredient_id = db.Column(db.Integer, db.ForeignKey('Ingredients.id'), nullable=True)  # Foreign key to Ingredients
     Amount = db.Column(db.Integer, nullable=True)
     Expiry_date = db.Column(db.Date, nullable=True)
-    Days_in_Stock = db.Column(db.Integer, nullable=True)
+    Days_Until_Expiration = db.Column(db.Integer, nullable=True)
     
     # Relationship back to Ingredient
     Ingredient = db.relationship('Ingredient', backref='stock_entries', lazy=True)
 
 
-# Helper function to calculate Days_in_Stock
-def calculate_days_in_stock(expiry_date):
+# Helper function to calculate Days_Until_Expiration
+def calculate_days_until_expiration(expiry_date):
     return (expiry_date - date.today()).days if expiry_date else None
+
 
 
 # Add stock function
@@ -95,15 +96,15 @@ def add_stock():
             else:
                 return jsonify({"error": "No expiry date found for the ingredient category"}), 404
 
-        # Calculate Days in Stock
-        days_in_stock = calculate_days_in_stock(expiry_date)
+        # Calculate Days Until Expiration
+        days_until_expiration = calculate_days_until_expiration(expiry_date)
 
         # Create new stock entry
         new_stock = Stock(
             Ingredient_id=data['Ingredient_id'],
             Amount=data['Amount'],
             Expiry_date=expiry_date,
-            Days_in_Stock=days_in_stock
+            Days_Until_Expiration=days_until_expiration
         )
         
         db.session.add(new_stock)
@@ -124,8 +125,9 @@ def get_stock():
             Stock.Ingredient_id,
             Stock.Amount,
             Stock.Expiry_date,
-            Stock.Days_in_Stock,
-            Ingredient.Unit
+            Stock.Days_Until_Expiration,
+            Ingredient.Unit,
+            Ingredient.Ingredient
         ).join(Ingredient, Stock.Ingredient_id == Ingredient.id).all()
 
         # Prepare the response data
@@ -136,13 +138,15 @@ def get_stock():
                 'Ingredient_id': stock.Ingredient_id,
                 'Amount': stock.Amount,
                 'Expiry_date': stock.Expiry_date,
-                'Days_in_Stock': stock.Days_in_Stock,
-                'Unit': stock.Unit
+                'Days_Until_Expiration': stock.Days_Until_Expiration,
+                'Unit': stock.Unit,
+                'Ingredient': stock.Ingredient 
             })
 
         return jsonify(stock_data), 200
     except Exception as e:
         return jsonify({"error": "Failed to fetch stock", "details": str(e)}), 500
+
 
 
 # Edit stock function
@@ -169,9 +173,9 @@ def edit_stock(id):
                 if expiry_entry:
                     stock.Expiry_date = date.today() + timedelta(days=expiry_entry.Expiry)
         
-        # Recalculate Days_in_Stock
+        # Recalculate Days_Until_Expiration
         if stock.Expiry_date:
-            stock.Days_in_Stock = calculate_days_in_stock(stock.Expiry_date)
+            stock.Days_Until_Expiration = calculate_days_until_expiration(stock.Expiry_date)
 
         db.session.commit()
         return jsonify({"message": "Stock updated successfully"}), 200
@@ -193,27 +197,25 @@ def remove_expired_stock():
             print(f"Error removing expired stock {stock.id}: {e}")
             db.session.rollback()
 
-# Background task to update Days_in_Stock for all stock items
-def update_days_in_stock_task():
+# Background task to update Days_Until_Expiration for all stock items
+def update_days_until_expiration_task():
     today = date.today()
     stocks = Stock.query.all()
     for stock in stocks:
         if stock.Expiry_date:
-            stock.Days_in_Stock = calculate_days_in_stock(stock.Expiry_date)
+            stock.Days_Until_Expiration = calculate_days_until_expiration(stock.Expiry_date)
     
     try:
         db.session.commit()
-        print("Updated Days_in_Stock for all stock items.")
+        print("Updated Days_Until_Expiration for all stock items.")
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating Days_in_Stock: {e}")
+        print(f"Error updating Days_Until_Expiration: {e}")
 
 
 # Schedule the task to run daily
-scheduler.add_job(update_days_in_stock_task, 'interval', days=1)
+scheduler.add_job(update_days_until_expiration_task, 'interval', days=1)
 scheduler.start()
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
