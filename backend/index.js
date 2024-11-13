@@ -25,7 +25,7 @@ app.use(express.static('public'));
 
 //specific routes
 // app.use('/api/ROUTENAME', imported route at the top of the document);
-app.use('/api/ingredients', ingredientsRoutes);
+app.use('/api/stock', ingredientsRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/recipe', recipeRoutes);
 
