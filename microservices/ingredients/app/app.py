@@ -73,48 +73,6 @@ def calculate_days_until_expiration(expiry_date):
     return (expiry_date - date.today()).days if expiry_date else None
 
 
-
-# Add stock function
-@app.route('/stock', methods=['POST'])
-def add_stock():
-    data = request.get_json()
-    try:
-        # Check if Expiry Date is provided
-        expiry_date = None
-        if 'Expiry_date' in data:
-            expiry_date = date.fromisoformat(data['Expiry_date'])
-        else:
-            # No expiry date provided, look it up based on the Category from Ingredients
-            ingredient = Ingredient.query.get(data['Ingredient_id'])
-            if not ingredient:
-                return jsonify({"error": "Ingredient not found"}), 404
-
-            # Fetch the expiry date based on the Category of the Ingredient
-            expiry_entry = ExpiryDate.query.filter_by(Category=ingredient.Category).first()
-            if expiry_entry:
-                expiry_date = date.today() + timedelta(days=expiry_entry.Expiry)  # Calculate expiry based on days
-            else:
-                return jsonify({"error": "No expiry date found for the ingredient category"}), 404
-
-        # Calculate Days Until Expiration
-        days_until_expiration = calculate_days_until_expiration(expiry_date)
-
-        # Create new stock entry
-        new_stock = Stock(
-            Ingredient_id=data['Ingredient_id'],
-            Amount=data['Amount'],
-            Expiry_date=expiry_date,
-            Days_Until_Expiration=days_until_expiration
-        )
-        
-        db.session.add(new_stock)
-        db.session.commit()
-
-        return jsonify({"message": "Stock added successfully"}), 201
-    except Exception as e:
-        return jsonify({"error": "Failed to add stock", "details": str(e)}), 500
-
-
 # Get stock function (combine Stock and Ingredient data)
 @app.route('/stock', methods=['GET'])
 def get_stock():
@@ -147,8 +105,6 @@ def get_stock():
     except Exception as e:
         return jsonify({"error": "Failed to fetch stock", "details": str(e)}), 500
 
-
-
 # Edit stock function
 @app.route('/stock/<int:id>', methods=['PUT'])
 def edit_stock(id):
@@ -176,14 +132,17 @@ def edit_stock(id):
         # Recalculate Days_Until_Expiration
         if stock.Expiry_date:
             stock.Days_Until_Expiration = calculate_days_until_expiration(stock.Expiry_date)
-
+        
         db.session.commit()
+        
+        if stock.Expiry_date < date.today():
+            remove_expired_stock()
+            
         return jsonify({"message": "Stock updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": "Failed to update stock", "details": str(e)}), 500
-
-
-# Function to remove expired stock
+   
+# Function to remove expired stock (Used in PUT in stock)
 def remove_expired_stock():
     today = date.today()
     expired_stocks = Stock.query.filter(Stock.Expiry_date < today).all()

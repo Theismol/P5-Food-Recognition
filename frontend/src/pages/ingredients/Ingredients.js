@@ -3,7 +3,7 @@ import { Box, FormControl, InputLabel, MenuItem, Select, Grid, Typography, IconB
 import EditIcon from '@mui/icons-material/Edit';
 import Navbar from '../components/Navbar';
 
-const backendUrl = "http://localhost:5000";
+const backendUrl = "http://localhost:4000/api";
 const drawerHeight = 54;
 
 const Ingredients = () => {
@@ -32,7 +32,7 @@ const Ingredients = () => {
         setSortOption(sortValue);
 
         const sorted = [...sortedIngredients];
-        sorted.sort((a, b) => 
+        sorted.sort((a, b) =>
             sortValue === 'Quantity' ? b.Amount - a.Amount : new Date(a.Expiry_date) - new Date(b.Expiry_date)
         );
         setSortedIngredients(sorted);
@@ -49,6 +49,7 @@ const Ingredients = () => {
     };
 
     const formatDate = (dateString) => new Date(dateString).toISOString().split('T')[0];
+
     const formatDaysUntilExpiration = (days) => (days < 0 ? "Expired" : `${days} days`);
 
     const handleSaveIngredient = async () => {
@@ -111,84 +112,97 @@ const Ingredients = () => {
 
             <Box sx={{ padding: 4, marginTop: 15 }}>
                 <Grid container spacing={2} columns={12}>
-                    {sortedIngredients.map((ingredient, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
-                            <Box
-                                sx={{
-                                    border: '1px solid #ccc',
-                                    borderRadius: 2,
-                                    padding: 2,
-                                    backgroundColor: '#c0b9dd',
-                                    color: '#000000',
-                                    boxShadow: 1,
-                                    position: 'relative'
-                                }}
-                            >
-                                {/* Display Ingredient Name */}
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                    {ingredient.Ingredient}  {/* Ingredient name */}
-                                </Typography>
+                    {sortedIngredients.map((ingredient, index) => {
+                        //the Days Until Expiration is within 3 days (will be marked red)
+                        const daysUntilExpiration = ingredient.Days_Until_Expiration;
+                        const isExpiringSoon = daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
 
-                                {selectedIngredient && selectedIngredient.id === ingredient.id
-                                    ? (
-                                        <>
-                                            <TextField
-                                                label="Quantity"
-                                                name="Amount"
-                                                type="number"
-                                                value={selectedIngredient.Amount}
-                                                onChange={handleEditSelectedIngredient}
-                                                fullWidth
-                                                margin="normal"
-                                                InputProps={{ inputProps: { min: 0 } }}
-                                            />
-                                            <TextField
-                                                label="Expiry"
-                                                name="Expiry_date"
-                                                type="date"
-                                                value={formatDate(selectedIngredient.Expiry_date)}
-                                                onChange={handleEditSelectedIngredient}
-                                                fullWidth
-                                                margin="normal"
-                                                InputLabelProps={{ shrink: true }}
-                                            />
-                                        </>
-                                    )
-                                    : (
-                                        <>
-                                            <Typography variant="body1">
-                                                Quantity: {ingredient.Amount} {ingredient.Unit}
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                Expiry: {formatDate(ingredient.Expiry_date)}
-                                            </Typography>
-                                        </>
+                        return (
+                            <Grid item xs={12} sm={6} md={4} key={index}>
+                                <Box
+                                    sx={{
+                                        border: '1px solid #ccc',
+                                        borderRadius: 2,
+                                        padding: 2,
+                                        backgroundColor: '#c0b9dd',
+                                        color: '#000000',
+                                        boxShadow: 1,
+                                        position: 'relative',
+                                        //Change background color when it's about to expire
+                                        backgroundColor: isExpiringSoon ? '#ffdddd' : '#c0b9dd', // Light red when expiring soon
+                                    }}
+                                >
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                        {ingredient.Ingredient}
+                                    </Typography>
+
+                                    {selectedIngredient && selectedIngredient.id === ingredient.id
+                                        ? (
+                                            <>
+                                                <TextField
+                                                    label="Quantity"
+                                                    name="Amount"
+                                                    type="number"
+                                                    value={selectedIngredient.Amount}
+                                                    onChange={handleEditSelectedIngredient}
+                                                    fullWidth
+                                                    margin="normal"
+                                                    InputProps={{ inputProps: { min: 0 } }}
+                                                />
+                                                <TextField
+                                                    label="Expiry"
+                                                    name="Expiry_date"
+                                                    type="date"
+                                                    value={formatDate(selectedIngredient.Expiry_date)}
+                                                    onChange={handleEditSelectedIngredient}
+                                                    fullWidth
+                                                    margin="normal"
+                                                    InputLabelProps={{ shrink: true }}
+                                                />
+                                            </>
+                                        )
+                                        : (
+                                            <>
+                                                <Typography variant="body1">
+                                                    Quantity: {ingredient.Amount} {ingredient.Unit}
+                                                </Typography>
+                                                <Typography variant="body1">
+                                                    Expiry: {formatDate(ingredient.Expiry_date)}
+                                                </Typography>
+                                            </>
+                                        )}
+
+                                    {/*change color of the text when expiring soon */}
+                                    <Typography
+                                        variant="body1"
+                                        sx={{
+                                            color: isExpiringSoon ? 'red' : 'inherit', // Red text when expiring soon
+                                        }}
+                                    >
+                                        Day(s) Until Expiration: {formatDaysUntilExpiration(ingredient.Days_Until_Expiration)}
+                                    </Typography>
+
+                                    {selectedIngredient && selectedIngredient.id === ingredient.id && (
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            sx={{ position: 'absolute', bottom: 5, right: 5 }}
+                                            onClick={handleSaveIngredient}
+                                        >
+                                            Save
+                                        </Button>
                                     )}
 
-                                <Typography variant="body1">
-                                    Day(s) Until Expiration: {formatDaysUntilExpiration(ingredient.Days_Until_Expiration)}
-                                </Typography>
-
-                                {selectedIngredient && selectedIngredient.id === ingredient.id && (
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        sx={{ position: 'absolute', bottom: 5, right: 5 }}
-                                        onClick={handleSaveIngredient}
+                                    <IconButton
+                                        sx={{ position: 'absolute', top: 0, right: 0, color: '#000000' }}
+                                        onClick={() => handleEditIngredient(ingredient)}
                                     >
-                                        Save
-                                    </Button>
-                                )}
-                                
-                                <IconButton
-                                    sx={{ position: 'absolute', top: 0, right: 0, color: '#000000' }}
-                                    onClick={() => handleEditIngredient(ingredient)}
-                                >
-                                    <EditIcon />
-                                </IconButton>
-                            </Box>
-                        </Grid>
-                    ))}
+                                        <EditIcon />
+                                    </IconButton>
+                                </Box>
+                            </Grid>
+                        );
+                    })}
                 </Grid>
             </Box>
         </Box>
