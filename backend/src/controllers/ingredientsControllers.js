@@ -28,7 +28,6 @@ export const editStock = async (req, res) => {
 };
 
 export default {
-    getIngredients,
     getStock,
     editStock,
 };
