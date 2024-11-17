@@ -1,9 +1,0 @@
-{
-  "devDependencies": {
-    "axios-mock-adapter": "^2.1.0",
-    "jest": "^29.7.0"
-  },
-  "dependencies": {
-    "axios": "^1.7.7"
-  }
-}
