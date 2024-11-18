@@ -39,7 +39,7 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Expose the port that Flask runs on (5000 by default)
-EXPOSE 2000
+EXPOSE 3000
 
 # Run the Flask app
 CMD ["python", "app.py"]

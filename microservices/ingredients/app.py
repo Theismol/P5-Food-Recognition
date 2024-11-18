@@ -1,5 +1,5 @@
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, text
 load_dotenv()
 
 # Define your parameters
-username = os.getenv("DB_username")
+username = os.getenv("username")
 password = os.getenv("password")
 server = os.getenv("server")
 database = os.getenv("database")
@@ -78,6 +78,53 @@ class Stock(db.Model):
 # Helper function to calculate Days_Until_Expiration
 def calculate_days_until_expiration(expiry_date):
     return (expiry_date - date.today()).days if expiry_date else None
+
+
+@app.route("/add-stock", methods=["POST"])
+def add_stock():
+    data = request.get_json()
+    expiry_date = None
+    ingredient_id = None
+    try:
+        if "ingredientName" not in data or "amount" not in data:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        if "expiry" in data:
+            expiry_date = datetime.strptime(data["expiry"], "%m/%d/%Y").date()
+        else:
+            ingredient = Ingredient.query.filter_by(
+                Ingredient=data["ingredientName"]
+            ).first()
+            if not ingredient:
+                return jsonify({"error": "Ingredient not found"}), 404
+            days_in_stock = ExpiryDate.query.filter_by(
+                Category=ingredient.Category
+            ).first()
+            if days_in_stock:
+                expiry_date = date.today() + timedelta(days=days_in_stock.Expiry)
+            else:
+                return (
+                    jsonify({"error": "Could not find expiry date for the item"}),
+                    404,
+                )
+            ingredient_id = ingredient.id
+        print(expiry_date)
+
+        days_until_expiration = calculate_days_until_expiration(expiry_date)
+        new_stock = Stock(
+            Ingredient_id=ingredient_id,
+            Amount=data["amount"],
+            Expiry_date=expiry_date,
+            Days_Until_Expiration=days_until_expiration,
+        )
+        db.session.add(new_stock)
+        db.session.commit()
+
+        return jsonify({"message": "Stock added successfully"}), 201
+
+    except Exception as e:
+        print(e)
+        return ({"error": "Failed to add stock"}), 500
 
 
 # Get stock function (combine Stock and Ingredient data)

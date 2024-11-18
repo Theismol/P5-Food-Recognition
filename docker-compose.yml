@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  frontend:
+    image: ghcr.io/Theismol/P5-Food-Recognition/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://130.225.37.189:2000
+    deploy:
+      replicas: 1
+    networks:
+      - swarm-network
+
+  backend:
+    image: ghcr.io/Theismol/P5-Food-Recognition/backend:latest
+    ports:
+      - "2000:2000"
+    depends_on:
+      - recipes
+      - ingredients
+      - image-rec
+    deploy:
+      replicas: 1
+    networks:
+      - swarm-network
+
+  recipes:
+    image: ghcr.io/TheismolP5-Food-Recognition/recipes:latest
+    env_file:
+      - ./.env
+    deploy:
+      replicas: 1
+    networks:
+      - swarm-network
+
+  ingredients:
+    image: ghcr.io/TheismolP5-Food-Recognition/ingredients:latest
+    env_file:
+    - ./.env
+    deploy:
+      replicas: 1
+    networks:
+      - swarm-network
+
+  image-rec:
+    image: ghcr.io/TheismolP5-Food-Recognition/image-rec:latest
+    deploy:
+      replicas: 1
+    networks:
+      - swarm-network
+
+networks:
+  swarm-network:
+    driver: overlay
+

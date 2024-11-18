@@ -2,11 +2,11 @@ import axios from 'axios';
 
 
 
-
+const apiUrl = "http://recipes:3000"
 export const generateRecipes = async (req, res) => {
     const { dietPreferences } = req.body;
     try {
-        const response = await axios.post('http://localhost:5000/generate-recipes', { dietPreferences: dietPreferences });
+        const response = await axios.post(`${apiUrl}/generate-recipes`, { dietPreferences: dietPreferences });
         res.json(response.data);
     }
     catch (error) {
@@ -18,7 +18,7 @@ export const generateRecipes = async (req, res) => {
 export const chooseRecipe = async (req, res) => {
     const { recipeID } = req.body;
     try {
-        const response = await axios.post('http://localhost:5000/choose-recipe', { recipeID: recipeID });
+        const response = await axios.post(`${apiUrl}/choose-recipe`, { recipeID: recipeID });
         res.json({ message: "Recipe chosen succesfully. Ingredients are removed from stock automatically!" });
     }
     catch {

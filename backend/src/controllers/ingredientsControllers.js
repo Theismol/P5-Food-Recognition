@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API endpoint where the flask app (ingredient) is running
-const apiBaseUrl = 'http://127.0.0.1:5000'; // Base URL of ingredients microservice
+const apiBaseUrl = 'http://ingredients:3000'; // Base URL of ingredients microservice
 
 // Stock API Functions
 // Fetch all stock
@@ -28,7 +28,6 @@ export const editStock = async (req, res) => {
 };
 
 export default {
-    getIngredients,
     getStock,
     editStock,
 };

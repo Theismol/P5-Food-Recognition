@@ -8,14 +8,14 @@ import homeRoutes from './src/routes/homeRoutes.js'
 
 import recipeRoutes from './src/routes/recipeRoutes.js';
 
-const port = 4000;
+const port = 2000;
 const app = express();
 
 app.use(cors({
-    origin: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true // Allow cookies to be sent with requests
+   origin: true,
+   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+   //allowedHeaders: ['Content-Type', 'Authorization'],
+   credentials: true // Allow cookies to be sent with requests
 }));
 
 // Makes it so that we can receive http requests as JSON and they will automatically be in req.body
@@ -29,9 +29,9 @@ app.use('/api/stock', ingredientsRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/recipe', recipeRoutes);
 
- app.listen(port, () => {
-    console.log(`App listening on port ${port}`)
-}) 
+app.listen(port, () => {
+   console.log(`App listening on port ${port}`)
+})
 
 
 // Export the app for testing
