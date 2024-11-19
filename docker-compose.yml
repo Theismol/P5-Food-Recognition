@@ -32,7 +32,7 @@ services:
       - swarm-network
 
   recipes:
-    image: ghcr.io/theismolp5-food-recognition/recipes:latest
+    image: ghcr.io/theismol/p5-food-recognition/recipes:latest
     env_file:
       - ./.env
     deploy:
@@ -44,7 +44,7 @@ services:
       - swarm-network
 
   ingredients:
-    image: ghcr.io/theismolp5-food-recognition/ingredients:latest
+    image: ghcr.io/theismol/p5-food-recognition/ingredients:latest
     env_file:
     - ./.env
     deploy:
@@ -56,7 +56,7 @@ services:
       - swarm-network
 
   image-rec:
-    image: ghcr.io/theismolp5-food-recognition/image-rec:latest
+    image: ghcr.io/theismol/p5-food-recognition/image-rec:latest
     deploy:
       replicas: 1
       placement:
