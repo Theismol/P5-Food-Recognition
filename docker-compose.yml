@@ -5,8 +5,6 @@ services:
     image: ghcr.io/theismol/p5-food-recognition/frontend:latest
     ports:
       - "80:80"
-    environment:
-      - REACT_APP_API_URL=http://130.225.37.189:2000
     deploy:
       replicas: 1
       placement:
