@@ -10,6 +10,9 @@ services:
       placement:
         constraints:
           - node.role == worker
+
+    devices:
+      - /dev/video0:/dev/video0
     networks:
       - swarm-network
 

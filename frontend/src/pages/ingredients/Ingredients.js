@@ -19,6 +19,7 @@ const Ingredients = () => {
 
     const fetchIngredients = async () => {
         try {
+            console.log(backendUrl)
             const response = await fetch(`${backendUrl}/api/stock`);
             setSortedIngredients(await response.json());
         } catch (error) {

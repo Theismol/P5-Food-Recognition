@@ -31,7 +31,7 @@ function Recipes() {
 
     const handleGenerateRecipes = async () => {
         try {
-            const response = await axios.post(`${backendURL}/generate-recipes`, { dietPreferences: dietaryRestrictions });
+            const response = await axios.post(`${backendURL}/api/recipe/generate-recipes`, { dietPreferences: dietaryRestrictions });
             setAvailableRecipes(response.data.recipes || []);
         } catch (error) {
             console.error('Error fetching recipes:', error);
@@ -51,7 +51,7 @@ function Recipes() {
     const handleRecipeDone = async () => {
         if (selectedRecipe) {
             try {
-                await axios.post(`${backendURL}/choose-recipe`, { recipeID: selectedRecipe.RecipeID });
+                await axios.post(`${backendURL}/api/recipe/choose-recipe`, { recipeID: selectedRecipe.RecipeID });
                 // Refresh the available recipes
                 await handleGenerateRecipes();
                 handleClose();
