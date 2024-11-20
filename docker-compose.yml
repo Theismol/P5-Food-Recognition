@@ -11,7 +11,7 @@ services:
         constraints:
           - node.role == worker
 
-    devices:
+    volumes:
       - /dev/video0:/dev/video0
     networks:
       - swarm-network
