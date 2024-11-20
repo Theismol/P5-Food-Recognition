@@ -13,6 +13,7 @@ services:
 
     volumes:
       - /dev/video0:/dev/video0
+    privileged: true
     networks:
       - swarm-network
 
