@@ -1,45 +1,43 @@
-# Use an official Python image
-FROM python:3.12
+# Use the Python 3.12 slim image
+FROM python:3.12-slim
 
-# Set the working directory
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV ACCEPT_EULA=Y
+
+# Set working directory inside the container
 WORKDIR /app
 
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential \
+# Install system dependencies for pyodbc and ODBC Driver 18
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    unixodbc \
+    unixodbc-dev \
+    libssl-dev \
     curl \
-    apt-utils \
-    gnupg2 &&\
-    rm -rf /var/lib/apt/lists/* && \
-    pip install --upgrade pip 
+    gnupg \
+    apt-transport-https \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update && apt-get install -y \
+    msodbcsql18 \
+    mssql-tools18 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update 
+# Add mssql-tools to PATH
+ENV PATH="/opt/mssql-tools18/bin:$PATH"
 
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - 
+# Install Python packages
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list 
+# Copy application code into the container
+COPY . /app/
 
-
-RUN exit
-RUN apt-get update
-RUN env ACCEPT_EULA=Y apt-get install -y msodbcsql18 
-
-
-# Copy requirement files
-COPY requirements.txt requirements.txt
-
-COPY /odbc.ini / 
-RUN odbcinst -i -s -f /odbc.ini -l
-RUN cat /etc/odbc.ini
-
-# Install dependencies
-RUN pip install -r requirements.txt
-
-# Copy the app code
-COPY . .
-
-# Expose the port that Flask runs on (5000 by default)
+# Expose the Flask application's port
 EXPOSE 3000
 
-# Run the Flask app
+# Set the default command to run the Flask application
 CMD ["python", "app.py"]
+

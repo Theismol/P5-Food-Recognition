@@ -19,7 +19,6 @@ driver = os.getenv("driver")
 
 # Create the connection string
 connection_string = f"mssql+pyodbc://{username}:{password}@{server}:1433/{database}?driver={driver.replace(' ', '+')}&Encrypt=yes&TrustServerCertificate=no&Connection Timeout=30"
-
 # Create an engine
 engine = create_engine(connection_string)
 

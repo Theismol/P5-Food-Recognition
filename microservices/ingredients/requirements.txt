@@ -5,4 +5,3 @@ pyodbc
 requests
 APScheduler
 python-dotenv
-
