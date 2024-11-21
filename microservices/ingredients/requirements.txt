@@ -1,0 +1,7 @@
+Flask
+Flask-CORS
+Flask-SQLAlchemy
+pyodbc
+requests
+APScheduler
+python-dotenv

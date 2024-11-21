@@ -8,13 +8,13 @@ import homeRoutes from './src/routes/homeRoutes.js'
 
 import recipeRoutes from './src/routes/recipeRoutes.js';
 
-const port = 4000;
+const port = 2000;
 const app = express();
 
 app.use(cors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    //allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true // Allow cookies to be sent with requests
 }));
 
@@ -29,9 +29,9 @@ app.use('/api/stock', ingredientsRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/recipe', recipeRoutes);
 
- app.listen(port, () => {
+app.listen(port, () => {
     console.log(`App listening on port ${port}`)
-}) 
+})
 
 
 // Export the app for testing

@@ -8,15 +8,15 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install the app dependencies
-RUN npm install
+RUN npm install --production
 
 # Copy the rest of the application code
 COPY ./src ./src
 COPY ./index.js ./
 
 # Expose the port your app runs on
-EXPOSE 4000
+EXPOSE 2000
 
 # Command to run the app
-CMD ["npm", "start"]
+CMD ["node", "index.js"]
 

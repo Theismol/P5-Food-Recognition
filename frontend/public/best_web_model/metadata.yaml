@@ -1,6 +1,6 @@
 description: Ultralytics YOLO11n model trained on /home/ubuntu/yolo_model/data.yaml
 author: Ultralytics
-date: '2024-11-07T21:15:12.494946'
+date: '2024-11-18T11:02:05.888403'
 version: 8.3.28
 license: AGPL-3.0 License (https://ultralytics.com/license)
 docs: https://docs.ultralytics.com
@@ -11,33 +11,22 @@ imgsz:
 - 640
 - 640
 names:
-  0: Apple
-  1: Banana
-  2: Broccoli
-  3: Butter
-  4: Carrots
-  5: Cheese
-  6: Chicken
-  7: Chopped Tomatoes
-  8: Clementine
-  9: Cream
-  10: Eggs
-  11: Garlic
-  12: Ground Beef
-  13: Milk
-  14: Mushrooms
-  15: Oats
-  16: Oil
-  17: Olive olie
-  18: Onion
-  19: Onions
-  20: Pasta
-  21: Rice
-  22: Rye Bread
-  23: Salami
-  24: Soy
-  25: Spring onion
-  26: Tomato
-  27: Tortillas
-  28: Wheat Flour
-  29: Yogurt
+  0: Banana
+  1: Butter
+  2: Carrots
+  3: Cheese
+  4: Chicken
+  5: Chopped Tomatoes
+  6: Cream
+  7: Eggs
+  8: Garlic
+  9: Ground Beef
+  10: Milk
+  11: Mushrooms
+  12: Oil
+  13: Onion
+  14: Pasta
+  15: Rice
+  16: Rye Bread
+  17: Tortillas
+  18: Wheat Flour

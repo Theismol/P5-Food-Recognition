@@ -1,7 +1,0 @@
-pandas
-numpy
-requests
-Flask==2.2.2          # Flask web framework
-Flask-CORS==3.0.10    # CORS support for Flask
-Flask-SQLAlchemy==2.5.1  # ORM support for Flask
-pyodbc==4.0.30         # ODBC driver for SQL Server ( since we are using Azure SQL)

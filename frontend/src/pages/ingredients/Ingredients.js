@@ -3,9 +3,8 @@ import { Box, FormControl, InputLabel, MenuItem, Select, Grid, Typography, IconB
 import EditIcon from '@mui/icons-material/Edit';
 import Navbar from '../components/Navbar';
 
-const backendUrl = "http://localhost:4000/api";
 const drawerHeight = 54;
-
+const backendUrl = process.env.REACT_APP_API_URL;
 const Ingredients = () => {
     const [sortOption, setSortOption] = useState('');
     const [sortedIngredients, setSortedIngredients] = useState([]);
@@ -20,7 +19,8 @@ const Ingredients = () => {
 
     const fetchIngredients = async () => {
         try {
-            const response = await fetch(`${backendUrl}/stock`);
+            console.log(backendUrl)
+            const response = await fetch(`${backendUrl}/api/stock`);
             setSortedIngredients(await response.json());
         } catch (error) {
             console.error("Error fetching ingredients:", error);
@@ -66,7 +66,7 @@ const Ingredients = () => {
         }
 
         try {
-            const response = await fetch(`${backendUrl}/stock/${id}`, {
+            const response = await fetch(`${backendUrl}/api/stock/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedStock),
@@ -124,7 +124,6 @@ const Ingredients = () => {
                                         border: '1px solid #ccc',
                                         borderRadius: 2,
                                         padding: 2,
-                                        backgroundColor: '#c0b9dd',
                                         color: '#000000',
                                         boxShadow: 1,
                                         position: 'relative',

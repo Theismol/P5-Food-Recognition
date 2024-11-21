@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 
-EXPOSE 5000
+COPY best.pt .
+
+EXPOSE 3000
 
 CMD ["python", "app.py"]

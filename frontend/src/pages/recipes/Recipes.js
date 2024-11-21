@@ -13,6 +13,7 @@ import axios from 'axios';
 const drawerHeight = 54; // Adjust the height as needed
 const dietaryRestrictionsChoices = ["Vegetarian", "Gluten free", "Dairy free", "Vegan"];
 
+const backendURL = process.env.REACT_APP_API_URL;
 function Recipes() {
     const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
     const [open, setOpen] = useState(false);
@@ -30,7 +31,7 @@ function Recipes() {
 
     const handleGenerateRecipes = async () => {
         try {
-            const response = await axios.post('http://localhost:2000/generate-recipes', { dietPreferences: dietaryRestrictions });
+            const response = await axios.post(`${backendURL}/api/recipe/generate-recipes`, { dietPreferences: dietaryRestrictions });
             setAvailableRecipes(response.data.recipes || []);
         } catch (error) {
             console.error('Error fetching recipes:', error);
@@ -50,7 +51,7 @@ function Recipes() {
     const handleRecipeDone = async () => {
         if (selectedRecipe) {
             try {
-                await axios.post('http://localhost:2000/choose-recipe', { recipeID: selectedRecipe.RecipeID });
+                await axios.post(`${backendURL}/api/recipe/choose-recipe`, { recipeID: selectedRecipe.RecipeID });
                 // Refresh the available recipes
                 await handleGenerateRecipes();
                 handleClose();

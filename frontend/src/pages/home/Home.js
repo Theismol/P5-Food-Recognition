@@ -13,6 +13,7 @@ import axios from 'axios';
 import * as tf from "@tensorflow/tfjs";
 import { TextField } from '@mui/material';
 function Home() {
+    const backendURL = process.env.REACT_APP_API_URL;
     const webcamRef = useRef(null)
     const [open, setOpen] = useState(false);
     const [alertOpen, setAlertOpen] = useState(false);
@@ -20,7 +21,6 @@ function Home() {
     const [model, setModel] = useState(null);
     const [detectedItem, setDetectedItem] = useState(null);
     const [selectedIngredient, setSelectedIngredient] = useState(null);
-    const backendURL = "http://localhost:4000"
     const labels = [
         { name: "Banana", unit: "pieces" },
         { name: "Butter", unit: "g" },
@@ -81,7 +81,7 @@ function Home() {
     }
     const handleSave = async () => {
         try {
-            const response = await axios.post(`${backendURL}/stock`, selectedIngredient);
+            const response = await axios.post(`${backendURL}/api/stock`, { ingredientName: selectedIngredient.name, amount: selectedIngredient.quantity, expiry: selectedIngredient.expiryDate });
             handleAlertOpen("Item sucessfully added to stock");
 
         }
@@ -179,13 +179,13 @@ function Home() {
 
                 // Run model prediction
                 const prediction = await model.executeAsync(tensor);
-                const reshapedPredictions = prediction.reshape([1, 34, 8400]);
+                const reshapedPredictions = prediction.reshape([1, 23, 8400]);
 
                 // Extract bounding boxes (first 4 values)
                 const boxesTensor = reshapedPredictions.slice([0, 0, 0], [1, 4, 8400]);
 
                 // Extract scores (remaining 30 values per detection)
-                const scoresTensor = reshapedPredictions.slice([0, 4, 0], [1, 30, 8400]);
+                const scoresTensor = reshapedPredictions.slice([0, 4, 0], [1, 19, 8400]);
 
                 // Optional: You could derive class predictions by finding the max score index in `scoresTensor`
                 const classesTensor = scoresTensor.argMax(1).squeeze();

@@ -1,1 +1,7 @@
-Flask==2.1.1
+Flask
+Flask-CORS
+Flask-SQLAlchemy
+pyodbc
+requests
+python-dotenv
+
