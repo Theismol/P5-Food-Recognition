@@ -87,11 +87,11 @@ class Stock(db.Model):
     Days_Until_Expiration = db.Column(db.Integer, nullable=True)
     Ingredient = db.relationship("Ingredient", backref="stock_entries", lazy=True)
 
+
 @app.route("/generate-recipes", methods=["POST"])
 def generate_recipes():
     data = request.json
     diet_preferences = data.get("dietPreferences")
-    print(f"Received diet preferences: {diet_preferences}")
 
     try:
         # These will hold the allergy IDs corresponding to the selected diet preferences
@@ -99,14 +99,10 @@ def generate_recipes():
 
         # For each diet preference, find corresponding allergies
         for preference in diet_preferences:
-            print(f"Filtering allergies for preference: {preference}")
             allergies_filter = Allergy.query.filter(
                 Allergy.Allergy.ilike(preference)
             ).all()
-            print(f"Found allergies for {preference}: {[allergy.Allergy for allergy in allergies_filter]}")
             allergy_ids.extend([allergy.id for allergy in allergies_filter])
-
-        print(f"Filtered allergy IDs based on preferences: {allergy_ids}")
 
         # If any dietary preferences are provided
         if allergy_ids:
@@ -116,11 +112,9 @@ def generate_recipes():
             ).all()
 
             # Get the unique list of recipe IDs that match the selected allergies
-            recipe_ids_with_matching_allergies = list(set(
-                ra.Recipes_id for ra in recipes_with_matching_allergies
-            ))
-
-            print(f"Recipes matching diet preferences: {recipe_ids_with_matching_allergies}")
+            recipe_ids_with_matching_allergies = list(
+                set(ra.Recipes_id for ra in recipes_with_matching_allergies)
+            )
 
             # Fetch the recipes that match the selected diet preferences (allergies)
             available_recipes = Recipe.query.filter(
@@ -129,8 +123,6 @@ def generate_recipes():
         else:
             # If no diet preferences are provided, return all recipes
             available_recipes = Recipe.query.all()
-
-        print(f"Available recipes after filtering: {[recipe.RecipeName for recipe in available_recipes]}")
 
         # Collect and return recipe details
         recipe_details = []
@@ -172,12 +164,11 @@ def generate_recipes():
                     }
                 )
 
-        print(f"Recipe details to return: {recipe_details}")
         return jsonify({"recipes": recipe_details})
 
     except SQLAlchemyError as e:
-        print(f"SQLAlchemy error: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/choose-recipe", methods=["POST"])
 def choose_recipe():
@@ -206,7 +197,9 @@ def choose_recipe():
 
         # Collect ingredient details and update stock
         for ingredient, ingredient_details in ingredients:
-            adjusted_amount = float(ingredient.Amount) * scale_factor  # Adjust amount for number of people
+            adjusted_amount = (
+                float(ingredient.Amount) * scale_factor
+            )  # Adjust amount for number of people
 
             stock_item = Stock.query.filter_by(
                 Ingredient_id=ingredient.Ingredients_id
