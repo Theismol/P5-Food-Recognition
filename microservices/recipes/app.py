@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ CORS(app)
 
 # Load environment variables
 load_dotenv()
-username = os.getenv("username")
+username = os.getenv("dbusername")
 password = os.getenv("password")
 server = os.getenv("server")
 database = os.getenv("database")
@@ -91,10 +92,9 @@ class Stock(db.Model):
 def generate_recipes():
     data = request.json
     diet_preferences = data.get("dietPreferences")
-    print(f"Received diet preferences: {diet_preferences}")
 
     try:
-        # These will hold the allergy IDs corresponding to the selected diet preferences
+        # Holds allergy ids
         allergy_ids = []
 
         # For each diet preference, find corresponding allergies
@@ -107,7 +107,6 @@ def generate_recipes():
 
             allergy_ids.extend([allergy.id for allergy in allergies_filter])
 
-        print(f"Filtered allergy IDs based on preferences: {allergy_ids}")
 
         # If any dietary preferences are provided
         if allergy_ids:
@@ -121,8 +120,6 @@ def generate_recipes():
                 ra.Recipes_id for ra in recipes_with_matching_allergies
             ))
 
-            print(f"Recipes matching diet preferences: {recipe_ids_with_matching_allergies}")
-
             # Fetch the recipes that match the selected diet preferences 
             available_recipes = Recipe.query.filter(
                 Recipe.id.in_(recipe_ids_with_matching_allergies)
@@ -131,8 +128,6 @@ def generate_recipes():
         else:
             # If no diet preferences are provided, return all recipes
             available_recipes = Recipe.query.all()
-
-        print(f"Available recipes after filtering: {[recipe.RecipeName for recipe in available_recipes]}")
 
         # Collect and return recipe details
         recipe_details = []
@@ -155,6 +150,7 @@ def generate_recipes():
 
             # Check if ingredients are available in stock
             useable_ingredients = True
+            expiring_ingredients = []
             for ingredient, ingredient_details in ingredients:
                 stock_item = Stock.query.filter_by(
                     Ingredient_id=ingredient.Ingredients_id
@@ -167,11 +163,27 @@ def generate_recipes():
                             "unit": ingredient.unit,
                         }
                     )
+
+                # Collect ingredients close to expiry
+                    if stock_item.Expiry_date:
+                        days_until_expiry = (stock_item.Expiry_date - datetime.date.today()).days
+                        expiring_ingredients.append({
+                            "ingredient": ingredient_details.Ingredient,
+                            "days_until_expiry": days_until_expiry,
+                        })
                 else:
                     useable_ingredients = False
                     break
 
-            if useable_ingredients:
+                if useable_ingredients:
+                     # Sort ingredients by expiry date: prioritize those expiring soon
+                    expiring_ingredients.sort(key=lambda x: x['days_until_expiry'])
+
+                    # Calculate the average "priority score" for the recipe based on expiring ingredients
+                    if expiring_ingredients:
+                        expiry_score = sum([ingredient['days_until_expiry'] for ingredient in expiring_ingredients]) / len(expiring_ingredients)
+                    else:
+                     expiry_score = 0  
                 recipe_details.append(
                     {
                         "RecipeID": recipe.id,
@@ -179,9 +191,13 @@ def generate_recipes():
                         "NumberOfPeople": recipe.NumberOfPeople,
                         "Instructions": recipe.Instructions,
                         "Ingredients": ingredients_info,
-                        "diet": dietary_preferences_list,  # Dietary preferences
+                        "diet": dietary_preferences_list,
+                        "expiry_score": expiry_score
                     }
                 )
+
+          # Sort recipes by the priority score based on expiring ingredients
+        recipe_details.sort(key=lambda x: x['expiry_score'])
 
         print(f"Recipe details to return: {recipe_details}")
         return jsonify({"recipes": recipe_details})
@@ -220,7 +236,7 @@ def choose_recipe():
             if stock_item and stock_item.Amount >= ingredient.Amount:
                 # Check if enough stock is available
                 stock_item.Amount -= ingredient.Amount  # Deduct the used amount
-                db.session.commit()  # Commit the changes to the stock
+                db.session.commit() # Commit the changes to the stock
 
                 ingredients_info.append(
                     {
