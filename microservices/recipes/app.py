@@ -104,6 +104,7 @@ def generate_recipes():
                 Allergy.Allergy.ilike(preference)
             ).all()
             print(f"Found allergies for {preference}: {[allergy.Allergy for allergy in allergies_filter]}")
+
             allergy_ids.extend([allergy.id for allergy in allergies_filter])
 
         print(f"Filtered allergy IDs based on preferences: {allergy_ids}")
@@ -122,10 +123,11 @@ def generate_recipes():
 
             print(f"Recipes matching diet preferences: {recipe_ids_with_matching_allergies}")
 
-            # Fetch the recipes that match the selected diet preferences (allergies)
+            # Fetch the recipes that match the selected diet preferences 
             available_recipes = Recipe.query.filter(
                 Recipe.id.in_(recipe_ids_with_matching_allergies)
             ).all()
+
         else:
             # If no diet preferences are provided, return all recipes
             available_recipes = Recipe.query.all()
@@ -135,6 +137,14 @@ def generate_recipes():
         # Collect and return recipe details
         recipe_details = []
         for recipe in available_recipes:
+            # Fetch the associated allergies/dietary preferences for the recipe
+            dietary_preferences = db.session.query(Allergy.Allergy).join(
+                RecipeAllergy, RecipeAllergy.Allergies_id == Allergy.id
+            ).filter(RecipeAllergy.Recipes_id == recipe.id).all()
+
+            # Extract the dietary preferences into a list
+            dietary_preferences_list = [diet.Allergy for diet in dietary_preferences]
+
             ingredients = (
                 db.session.query(RecipeIngredient, Ingredient)
                 .join(Ingredient, RecipeIngredient.Ingredients_id == Ingredient.id)
@@ -169,6 +179,7 @@ def generate_recipes():
                         "NumberOfPeople": recipe.NumberOfPeople,
                         "Instructions": recipe.Instructions,
                         "Ingredients": ingredients_info,
+                        "diet": dietary_preferences_list,  # Dietary preferences
                     }
                 )
 
