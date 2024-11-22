@@ -10,6 +10,8 @@ import Typography from '@mui/material/Typography';
 import { Checkbox, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import axios from 'axios';
 
+
+const backendURL = process.env.REACT_APP_API_URL;
 function Recipes() {
     const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
     const [open, setOpen] = useState(false);
@@ -29,7 +31,7 @@ function Recipes() {
 
     const handleGenerateRecipes = async () => {
         try {
-            const response = await axios.post('http://localhost:2000/generate-recipes', { dietPreferences: dietaryRestrictions });
+            const response = await axios.post(`${backendURL}/api/recipe/generate-recipes`, { dietPreferences: dietaryRestrictions });
             setAvailableRecipes(response.data.recipes || []);
         } catch (error) {
             console.error('Error fetching recipes:', error);
@@ -50,7 +52,7 @@ function Recipes() {
     const handleRecipeDone = async () => {
         if (selectedRecipe) {
             try {
-                await axios.post('http://localhost:2000/choose-recipe', { recipeID: selectedRecipe.RecipeID });
+                await axios.post(`${backendURL}/api/recipe/choose-recipe`, { recipeID: selectedRecipe.RecipeID });
                 await handleGenerateRecipes(); // Refresh the available recipes
                 handleClose();
             } catch (error) {
