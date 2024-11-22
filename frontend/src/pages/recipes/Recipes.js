@@ -139,22 +139,32 @@ function Recipes() {
                     ))}
                 </Select>
             </FormControl>
-            <Box sx={{ padding: 4, marginTop: 15 }}>
+            <Box sx={{ padding: 4, marginTop: 15, width: '100vw' }}>
                 <Grid container spacing={2} columns={12}>
                     {availableRecipes.map((recipe, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Grid item xs={12} sm={6} md={4} lg={4} xl={4} key={index} sx={{ position: "relative" }}>
                             <Box
                                 sx={{
                                     border: '1px solid #ccc',
                                     borderRadius: 2,
                                     padding: 2,
-                                    backgroundColor: '#c0b9dd',
-                                    color: '#000000',
+                                    backgroundColor: '#c0b9dd', // Restored background color
+                                    color: '#000000', // Ensure text is black
                                     boxShadow: 1,
                                 }}
                             >
-                                <Typography variant="h6">{recipe.RecipeName}</Typography>
-                                <Button variant="contained" color="secondary" onClick={() => handleMakeRecipe(recipe)}>Make recipe</Button>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                    {recipe.RecipeName}
+                                </Typography>
+                                <Typography variant="body1">
+                                    Dietary restrictions:
+                                    {(recipe.diet || []).map((diet, dietIndex) => (
+                                        <Typography key={dietIndex} variant="body2">
+                                            {"- " + diet}
+                                        </Typography>
+                                    ))}
+                                </Typography>
+                                <Button variant="contained" color="secondary" sx={{ position: 'absolute', bottom: 5, right: 5 }} onClick={() => { handleMakeRecipe(recipe) }}>Make</Button>
                             </Box>
                         </Grid>
                     ))}
