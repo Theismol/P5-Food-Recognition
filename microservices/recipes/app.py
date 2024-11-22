@@ -87,8 +87,6 @@ class Stock(db.Model):
     Days_Until_Expiration = db.Column(db.Integer, nullable=True)
     Ingredient = db.relationship("Ingredient", backref="stock_entries", lazy=True)
 
-
-# Function to generate recipes based on diet preferences
 @app.route("/generate-recipes", methods=["POST"])
 def generate_recipes():
     data = request.json
@@ -96,33 +94,45 @@ def generate_recipes():
     print(f"Received diet preferences: {diet_preferences}")
 
     try:
-        # Filter out recipes based on allergy restrictions in diet preferences
-        allergies_filter = Allergy.query.filter(
-            Allergy.Allergy.in_(diet_preferences)
-        ).all()
-        allergy_ids = [allergy.id for allergy in allergies_filter]
-        print(f"Filtered allergy IDs: {allergy_ids}")
+        # These will hold the allergy IDs corresponding to the selected diet preferences
+        allergy_ids = []
 
-        # Find recipes that do not have the restricted allergies
+        # For each diet preference, find corresponding allergies
+        for preference in diet_preferences:
+            print(f"Filtering allergies for preference: {preference}")
+            allergies_filter = Allergy.query.filter(
+                Allergy.Allergy.ilike(preference)
+            ).all()
+            print(f"Found allergies for {preference}: {[allergy.Allergy for allergy in allergies_filter]}")
+            allergy_ids.extend([allergy.id for allergy in allergies_filter])
+
+        print(f"Filtered allergy IDs based on preferences: {allergy_ids}")
+
+        # If any dietary preferences are provided
         if allergy_ids:
-            recipes_with_allergies = RecipeAllergy.query.filter(
+            # Query Recipes_has_Allergies to find recipes that match the selected allergies
+            recipes_with_matching_allergies = RecipeAllergy.query.filter(
                 RecipeAllergy.Allergies_id.in_(allergy_ids)
             ).all()
-            recipe_ids_with_allergies = [ra.Recipes_id for ra in recipes_with_allergies]
-            print(f"Recipes with restricted allergies: {recipe_ids_with_allergies}")
+
+            # Get the unique list of recipe IDs that match the selected allergies
+            recipe_ids_with_matching_allergies = list(set(
+                ra.Recipes_id for ra in recipes_with_matching_allergies
+            ))
+
+            print(f"Recipes matching diet preferences: {recipe_ids_with_matching_allergies}")
+
+            # Fetch the recipes that match the selected diet preferences (allergies)
             available_recipes = Recipe.query.filter(
-                ~Recipe.id.in_(recipe_ids_with_allergies)
+                Recipe.id.in_(recipe_ids_with_matching_allergies)
             ).all()
         else:
-            available_recipes = (
-                Recipe.query.all()
-            )  # No dietary restrictions, get all recipes
+            # If no diet preferences are provided, return all recipes
+            available_recipes = Recipe.query.all()
 
-        print(
-            f"Available recipes after filtering: {[recipe.RecipeName for recipe in available_recipes]}"
-        )
+        print(f"Available recipes after filtering: {[recipe.RecipeName for recipe in available_recipes]}")
 
-        # Collect recipe details
+        # Collect and return recipe details
         recipe_details = []
         for recipe in available_recipes:
             ingredients = (
@@ -152,7 +162,6 @@ def generate_recipes():
                     break
 
             if useable_ingredients:
-                # Append only usable recipes
                 recipe_details.append(
                     {
                         "RecipeID": recipe.id,
@@ -164,12 +173,11 @@ def generate_recipes():
                 )
 
         print(f"Recipe details to return: {recipe_details}")
-        # Ensure you return the collected recipe details
         return jsonify({"recipes": recipe_details})
 
     except SQLAlchemyError as e:
+        print(f"SQLAlchemy error: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/choose-recipe", methods=["POST"])
 def choose_recipe():
