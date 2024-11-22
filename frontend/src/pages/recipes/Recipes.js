@@ -52,11 +52,14 @@ function Recipes() {
     const handleRecipeDone = async () => {
         if (selectedRecipe) {
             try {
-                await axios.post(`${backendURL}/api/recipe/choose-recipe`, { recipeID: selectedRecipe.RecipeID });
+                await axios.post(`${backendURL}/api/recipe/choose-recipe`, {
+                    recipeID: selectedRecipe.RecipeID,
+                    numberOfPeople: numberOfPeople, // Include number of people in the request
+                });
                 await handleGenerateRecipes(); // Refresh the available recipes
                 handleClose();
             } catch (error) {
-                console.error('Error choosing recipe:', error);
+                console.error("Error choosing recipe:", error);
             }
         }
     };

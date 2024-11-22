@@ -183,13 +183,17 @@ def generate_recipes():
 def choose_recipe():
     data = request.json
     recipe_id = data.get("recipeID")
-    print(f"Received recipe ID: {recipe_id}")
+    number_of_people = data.get("numberOfPeople")
+    print(f"Received recipe ID: {recipe_id}, number of people: {number_of_people}")
 
     try:
         # Find the recipe by ID
         recipe = Recipe.query.get(recipe_id)
         if not recipe:
             return jsonify({"error": "Recipe not found"}), 404
+
+        # Scale factor for ingredient amounts
+        scale_factor = number_of_people / recipe.NumberOfPeople
 
         # Fetch related ingredients for the chosen recipe
         ingredients = (
@@ -202,19 +206,21 @@ def choose_recipe():
 
         # Collect ingredient details and update stock
         for ingredient, ingredient_details in ingredients:
+            adjusted_amount = float(ingredient.Amount) * scale_factor  # Adjust amount for number of people
+
             stock_item = Stock.query.filter_by(
                 Ingredient_id=ingredient.Ingredients_id
             ).first()
 
-            if stock_item and stock_item.Amount >= ingredient.Amount:
-                # Check if enough stock is available
-                stock_item.Amount -= ingredient.Amount  # Deduct the used amount
+            if stock_item and stock_item.Amount >= adjusted_amount:
+                # Deduct the adjusted amount from stock
+                stock_item.Amount -= adjusted_amount
                 db.session.commit()  # Commit the changes to the stock
 
                 ingredients_info.append(
                     {
                         "Ingredient": ingredient_details.Ingredient,
-                        "Amount": ingredient.Amount,
+                        "AdjustedAmount": round(adjusted_amount, 2),
                         "unit": ingredient.unit,
                         "AvailableInStock": stock_item.Amount,  # After deduction
                     }
@@ -223,10 +229,10 @@ def choose_recipe():
                 ingredients_info.append(
                     {
                         "Ingredient": ingredient_details.Ingredient,
-                        "Amount": ingredient.Amount,
+                        "AdjustedAmount": round(adjusted_amount, 2),
                         "unit": ingredient.unit,
                         "AvailableInStock": stock_item.Amount if stock_item else 0,
-                        "error": "Insufficient stock",  # Flag if stock is not enough
+                        "error": "Insufficient stock",  # Flag insufficient stock
                     }
                 )
 
