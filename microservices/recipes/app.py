@@ -147,6 +147,7 @@ def generate_recipes():
             # Check if ingredients are available in stock
             useable_ingredients = True
             expiring_ingredients = []
+            expiry_score = 0
             for ingredient, ingredient_details in ingredients:
                 stock_item = Stock.query.filter_by(
                     Ingredient_id=ingredient.Ingredients_id
@@ -180,17 +181,17 @@ def generate_recipes():
                         expiry_score = sum([ingredient['days_until_expiry'] for ingredient in expiring_ingredients]) / len(expiring_ingredients)
                     else:
                      expiry_score = 0  
-                recipe_details.append(
-                    {
-                        "RecipeID": recipe.id,
-                        "RecipeName": recipe.RecipeName,
-                        "NumberOfPeople": recipe.NumberOfPeople,
-                        "Instructions": recipe.Instructions,
-                        "Ingredients": ingredients_info,
-                        "diet": dietary_preferences_list,
-                        "expiry_score": expiry_score
-                    }
-                )
+            recipe_details.append(
+                {
+                    "RecipeID": recipe.id,
+                    "RecipeName": recipe.RecipeName,
+                    "NumberOfPeople": recipe.NumberOfPeople,
+                    "Instructions": recipe.Instructions,
+                    "Ingredients": ingredients_info,
+                    "diet": dietary_preferences_list,
+                    "expiry_score": expiry_score
+                }
+            )
 
           # Sort recipes by the priority score based on expiring ingredients
         recipe_details.sort(key=lambda x: x['expiry_score'])
