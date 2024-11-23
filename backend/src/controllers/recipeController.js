@@ -15,9 +15,9 @@ export const generateRecipes = async (req, res) => {
 }
 
 export const chooseRecipe = async (req, res) => {
-    const { recipeID } = req.body;
+    const { recipeID, numberOfPeople } = req.body;
     try {
-        const response = await axios.post(`${apiUrl}/choose-recipe`, { recipeID: recipeID });
+        const response = await axios.post(`${apiUrl}/choose-recipe`, { recipeID: recipeID, numberOfPeople: numberOfPeople });
         res.json({ message: "Recipe chosen succesfully. Ingredients are removed from stock automatically!" });
     }
     catch {

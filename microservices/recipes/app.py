@@ -88,6 +88,7 @@ class Stock(db.Model):
     Days_Until_Expiration = db.Column(db.Integer, nullable=True)
     Ingredient = db.relationship("Ingredient", backref="stock_entries", lazy=True)
 
+
 @app.route("/generate-recipes", methods=["POST"])
 def generate_recipes():
     data = request.json
@@ -99,15 +100,10 @@ def generate_recipes():
 
         # For each diet preference, find corresponding allergies
         for preference in diet_preferences:
-            print(f"Filtering allergies for preference: {preference}")
             allergies_filter = Allergy.query.filter(
                 Allergy.Allergy.ilike(preference)
             ).all()
-            print(f"Found allergies for {preference}: {[allergy.Allergy for allergy in allergies_filter]}")
-
             allergy_ids.extend([allergy.id for allergy in allergies_filter])
-
-
         # If any dietary preferences are provided
         if allergy_ids:
             # Query Recipes_has_Allergies to find recipes that match the selected allergies
@@ -198,25 +194,27 @@ def generate_recipes():
 
           # Sort recipes by the priority score based on expiring ingredients
         recipe_details.sort(key=lambda x: x['expiry_score'])
-
-        print(f"Recipe details to return: {recipe_details}")
         return jsonify({"recipes": recipe_details})
 
     except SQLAlchemyError as e:
-        print(f"SQLAlchemy error: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/choose-recipe", methods=["POST"])
 def choose_recipe():
     data = request.json
     recipe_id = data.get("recipeID")
-    print(f"Received recipe ID: {recipe_id}")
+    number_of_people = data.get("numberOfPeople")
+    print(f"Received recipe ID: {recipe_id}, number of people: {number_of_people}")
 
     try:
         # Find the recipe by ID
         recipe = Recipe.query.get(recipe_id)
         if not recipe:
             return jsonify({"error": "Recipe not found"}), 404
+
+        # Scale factor for ingredient amounts
+        scale_factor = number_of_people / recipe.NumberOfPeople
 
         # Fetch related ingredients for the chosen recipe
         ingredients = (
@@ -229,19 +227,23 @@ def choose_recipe():
 
         # Collect ingredient details and update stock
         for ingredient, ingredient_details in ingredients:
+            adjusted_amount = (
+                float(ingredient.Amount) * scale_factor
+            )  # Adjust amount for number of people
+
             stock_item = Stock.query.filter_by(
                 Ingredient_id=ingredient.Ingredients_id
             ).first()
 
-            if stock_item and stock_item.Amount >= ingredient.Amount:
-                # Check if enough stock is available
-                stock_item.Amount -= ingredient.Amount  # Deduct the used amount
-                db.session.commit() # Commit the changes to the stock
+            if stock_item and stock_item.Amount >= adjusted_amount:
+                # Deduct the adjusted amount from stock
+                stock_item.Amount -= adjusted_amount
+                db.session.commit()  # Commit the changes to the stock
 
                 ingredients_info.append(
                     {
                         "Ingredient": ingredient_details.Ingredient,
-                        "Amount": ingredient.Amount,
+                        "AdjustedAmount": round(adjusted_amount, 2),
                         "unit": ingredient.unit,
                         "AvailableInStock": stock_item.Amount,  # After deduction
                     }
@@ -250,10 +252,10 @@ def choose_recipe():
                 ingredients_info.append(
                     {
                         "Ingredient": ingredient_details.Ingredient,
-                        "Amount": ingredient.Amount,
+                        "AdjustedAmount": round(adjusted_amount, 2),
                         "unit": ingredient.unit,
                         "AvailableInStock": stock_item.Amount if stock_item else 0,
-                        "error": "Insufficient stock",  # Flag if stock is not enough
+                        "error": "Insufficient stock",  # Flag insufficient stock
                     }
                 )
 
