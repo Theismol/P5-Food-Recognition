@@ -12,7 +12,7 @@ CORS(app)
 
 # Load environment variables
 load_dotenv()
-username = os.getenv("dbusername")
+username = os.getenv("username")
 password = os.getenv("password")
 server = os.getenv("server")
 database = os.getenv("database")
