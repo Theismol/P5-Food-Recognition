@@ -14,7 +14,6 @@ export const generateRecipes = async (req, res) => {
     }
 }
 
-
 export const chooseRecipe = async (req, res) => {
     const { recipeID, numberOfPeople } = req.body;
     try {

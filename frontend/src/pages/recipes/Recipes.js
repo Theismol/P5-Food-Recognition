@@ -141,8 +141,9 @@ function Recipes() {
             </FormControl>
             <Box sx={{ padding: 4, marginTop: 15, width: '100vw' }}>
                 <Grid container spacing={2} columns={12}>
-                    {availableRecipes.map((recipe, index) => (
-                        <Grid item xs={12} sm={6} md={4} lg={4} xl={4} key={index} sx={{ position: "relative" }}>
+                    {availableRecipes.sort((a, b) => a.expiry_score - b.expiry_score) //Sorting the recipes based on expire score
+                    .map((recipe, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index} sx={{ position: "relative" }}>
                             <Box
                                 sx={{
                                     border: '1px solid #ccc',
