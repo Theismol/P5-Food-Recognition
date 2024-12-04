@@ -6,12 +6,13 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Navbar from '../components/Navbar';
+import Select from '@mui/material/Select';
 import Webcam from 'react-webcam';
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import axios from 'axios';
 import * as tf from "@tensorflow/tfjs";
-import { TextField } from '@mui/material';
+import { Autocomplete, TextField } from '@mui/material';
 function Home() {
     const backendURL = process.env.REACT_APP_API_URL;
     const webcamRef = useRef(null)
@@ -154,7 +155,6 @@ function Home() {
             }
 
         }
-
         return null; // If no classes were found
     }
     const predictImage = async () => {
@@ -194,7 +194,7 @@ function Home() {
                 const scores = scoresTensor.max(1).arraySync()[0]; // Max score per detection
                 const classes = classesTensor.arraySync();
                 const biggestConfidence = 0;
-                const threshold = 0.5;
+                const threshold = 0.8;
                 let results = {};
 
                 for (let i = 0; i < scores.length; i++) {
@@ -214,6 +214,25 @@ function Home() {
             };
         });
     };
+    const detectedItemDropDown = () => {
+        return (
+            <Autocomplete
+                options={labels.map(label => label.name)}
+                value={selectedIngredient.name}
+                onChange={(e, newValue) => {
+                    handleEditSelectedIngredient({ target: { name: 'name', value: newValue } });
+                }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label=""
+                        variant="outlined"
+                    />
+                )}
+                disableClearable
+            />
+        )
+    }
     const handleEditSelectedIngredient = (e) => {
         const { name, value } = e.target;
         setSelectedIngredient((prev) => ({
@@ -244,7 +263,7 @@ function Home() {
                 Add Item
             </Button>
             <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-                <DialogTitle>{detectedItem ? `Detected item: ${detectedItem.class}` : "Please put your grocery up to the camera and click capture"}</DialogTitle>
+                <DialogTitle>{detectedItem ? <>Detected item: {detectedItemDropDown()}</> : "Please put your grocery up to the camera and click capture"}</DialogTitle>
                 <DialogContent>
                     {detectedItem ? <>
                         <Box
@@ -264,9 +283,9 @@ function Home() {
                         />
                         <TextField
                             label="Expiry"
-                            name="expiry"
+                            name="expiryDate"
                             type="date" // Date type for expiry
-                            value={selectedIngredient.expiry}
+                            value={selectedIngredient.expiryDate}
                             onChange={handleEditSelectedIngredient}
                             fullWidth
                             margin="normal"
