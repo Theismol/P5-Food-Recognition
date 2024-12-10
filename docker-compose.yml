@@ -31,7 +31,7 @@ services:
   recipes:
     image: ghcr.io/theismol/p5-food-recognition/recipes:latest
     env_file:
-      - ./microservices/recipes/.env
+      - ./.env
     deploy:
       replicas: 1
       placement:
@@ -43,7 +43,7 @@ services:
   ingredients:
     image: ghcr.io/theismol/p5-food-recognition/ingredients:latest
     env_file:
-    - ./microservices/ingredients/.env
+    - ./.env
     deploy:
       replicas: 1
       placement:
