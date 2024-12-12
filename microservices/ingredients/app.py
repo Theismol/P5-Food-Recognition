@@ -88,8 +88,14 @@ def add_stock():
         if "ingredientName" not in data or "amount" not in data:
             return jsonify({"error": "Missing required fields"}), 400
 
-        if "expiry" in data:
-            expiry_date = datetime.strptime(data["expiry"], "%m/%d/%Y").date()
+        if "expiry" in data and data["expiry"] != None:
+            expiry_date = datetime.strptime(data["expiry"], "%Y-%m-%d").date()
+            ingredient = Ingredient.query.filter_by(
+                Ingredient=data["ingredientName"]
+            ).first()
+            if not ingredient:
+                return jsonify({"error": "Ingredient not found"}), 404
+            ingredient_id = ingredient.id
         else:
             ingredient = Ingredient.query.filter_by(
                 Ingredient=data["ingredientName"]

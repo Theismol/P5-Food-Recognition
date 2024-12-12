@@ -82,7 +82,7 @@ function Home() {
     }
     const handleSave = async () => {
         try {
-            const response = await axios.post(`${backendURL}/api/stock`, { ingredientName: selectedIngredient.name, amount: selectedIngredient.quantity, expiry: selectedIngredient.expiryDate });
+            const response = await axios.post(`${backendURL}/api/home/add-ingredient`, { name: selectedIngredient.name, quantity: selectedIngredient.quantity, expiry: selectedIngredient.expiryDate });
             handleAlertOpen("Item sucessfully added to stock");
 
         }
