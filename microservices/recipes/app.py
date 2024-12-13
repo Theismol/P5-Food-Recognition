@@ -65,14 +65,14 @@ class Ingredient(db.Model):
     Ingredient = db.Column(db.String(45), nullable=False)
     Category = db.Column(
         db.String(45), db.ForeignKey("Expiry_dates.Category")
-    )  # Foreign key to Expiry_dates
+    )  
     Unit = db.Column(db.String(45), nullable=False)
 
 
 class ExpiryDate(db.Model):
     __tablename__ = "Expiry_dates"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    Expiry = db.Column(db.Integer, nullable=True)  # Assuming expiry is a number of days
+    Expiry = db.Column(db.Integer, nullable=True)  
     Category = db.Column(db.String(45), unique=True, nullable=False)
     Ingredients = db.relationship("Ingredient", backref="expiry_category", lazy=True)
 
@@ -95,7 +95,7 @@ def generate_recipes():
     diet_preferences = data.get("dietPreferences")
 
     try:
-        # Holds allergy ids
+        
         allergy_ids = []
 
         # For each diet preference, find corresponding allergies
@@ -104,31 +104,28 @@ def generate_recipes():
                 Allergy.Allergy.ilike(preference)
             ).all()
             allergy_ids.extend([allergy.id for allergy in allergies_filter])
-        # If any dietary preferences are provided
+        
         if allergy_ids:
-            # Query Recipes_has_Allergies to find recipes that match the selected allergies
             recipes_with_matching_allergies = RecipeAllergy.query.filter(
                 RecipeAllergy.Allergies_id.in_(allergy_ids)
             ).all()
 
-            # Get the unique list of recipe IDs that match the selected allergies
             recipe_ids_with_matching_allergies = list(
                 set(ra.Recipes_id for ra in recipes_with_matching_allergies)
             )
 
-            # Fetch the recipes that match the selected diet preferences
             available_recipes = Recipe.query.filter(
                 Recipe.id.in_(recipe_ids_with_matching_allergies)
             ).all()
 
         else:
-            # If no diet preferences are provided, return all recipes
+           
             available_recipes = Recipe.query.all()
 
         # Collect and return recipe details
         recipe_details = []
         for recipe in available_recipes:
-            # Fetch the associated allergies/dietary preferences for the recipe
+            
             dietary_preferences = (
                 db.session.query(Allergy.Allergy)
                 .join(RecipeAllergy, RecipeAllergy.Allergies_id == Allergy.id)
@@ -182,7 +179,7 @@ def generate_recipes():
                     # Sort ingredients by expiry date: prioritize those expiring soon
                     expiring_ingredients.sort(key=lambda x: x["days_until_expiry"])
 
-                    # Calculate the average "priority score" for the recipe based on expiring ingredients
+                    
                     if expiring_ingredients:
                         expiry_score = sum(
                             [
@@ -229,7 +226,7 @@ def choose_recipe():
         # Scale factor for ingredient amounts
         scale_factor = number_of_people / recipe.NumberOfPeople
 
-        # Fetch related ingredients for the chosen recipe
+        
         ingredients = (
             db.session.query(RecipeIngredient, Ingredient)
             .join(Ingredient, RecipeIngredient.Ingredients_id == Ingredient.id)
@@ -238,27 +235,27 @@ def choose_recipe():
         )
         ingredients_info = []
 
-        # Collect ingredient details and update stock
+        
         for ingredient, ingredient_details in ingredients:
             adjusted_amount = (
                 float(ingredient.Amount) * scale_factor
-            )  # Adjust amount for number of people
+            )  
 
             stock_item = Stock.query.filter_by(
                 Ingredient_id=ingredient.Ingredients_id
             ).first()
 
             if stock_item and stock_item.Amount >= adjusted_amount:
-                # Deduct the adjusted amount from stock
+                
                 stock_item.Amount -= adjusted_amount
-                db.session.commit()  # Commit the changes to the stock
+                db.session.commit()  
 
                 ingredients_info.append(
                     {
                         "Ingredient": ingredient_details.Ingredient,
                         "AdjustedAmount": round(adjusted_amount, 2),
                         "unit": ingredient.unit,
-                        "AvailableInStock": stock_item.Amount,  # After deduction
+                        "AvailableInStock": stock_item.Amount,  
                     }
                 )
             else:
@@ -268,7 +265,7 @@ def choose_recipe():
                         "AdjustedAmount": round(adjusted_amount, 2),
                         "unit": ingredient.unit,
                         "AvailableInStock": stock_item.Amount if stock_item else 0,
-                        "error": "Insufficient stock",  # Flag insufficient stock
+                        "error": "Insufficient stock",  
                     }
                 )
 
