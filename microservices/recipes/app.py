@@ -112,11 +112,11 @@ def generate_recipes():
             ).all()
 
             # Get the unique list of recipe IDs that match the selected allergies
-            recipe_ids_with_matching_allergies = list(set(
-                ra.Recipes_id for ra in recipes_with_matching_allergies
-            ))
+            recipe_ids_with_matching_allergies = list(
+                set(ra.Recipes_id for ra in recipes_with_matching_allergies)
+            )
 
-            # Fetch the recipes that match the selected diet preferences 
+            # Fetch the recipes that match the selected diet preferences
             available_recipes = Recipe.query.filter(
                 Recipe.id.in_(recipe_ids_with_matching_allergies)
             ).all()
@@ -129,9 +129,12 @@ def generate_recipes():
         recipe_details = []
         for recipe in available_recipes:
             # Fetch the associated allergies/dietary preferences for the recipe
-            dietary_preferences = db.session.query(Allergy.Allergy).join(
-                RecipeAllergy, RecipeAllergy.Allergies_id == Allergy.id
-            ).filter(RecipeAllergy.Recipes_id == recipe.id).all()
+            dietary_preferences = (
+                db.session.query(Allergy.Allergy)
+                .join(RecipeAllergy, RecipeAllergy.Allergies_id == Allergy.id)
+                .filter(RecipeAllergy.Recipes_id == recipe.id)
+                .all()
+            )
 
             # Extract the dietary preferences into a list
             dietary_preferences_list = [diet.Allergy for diet in dietary_preferences]
@@ -161,40 +164,50 @@ def generate_recipes():
                         }
                     )
 
-                # Collect ingredients close to expiry
+                    # Collect ingredients close to expiry
                     if stock_item.Expiry_date:
-                        days_until_expiry = (stock_item.Expiry_date - datetime.date.today()).days
-                        expiring_ingredients.append({
-                            "ingredient": ingredient_details.Ingredient,
-                            "days_until_expiry": days_until_expiry,
-                        })
+                        days_until_expiry = (
+                            stock_item.Expiry_date - datetime.date.today()
+                        ).days
+                        expiring_ingredients.append(
+                            {
+                                "ingredient": ingredient_details.Ingredient,
+                                "days_until_expiry": days_until_expiry,
+                            }
+                        )
                 else:
                     useable_ingredients = False
                     break
-
                 if useable_ingredients:
-                     # Sort ingredients by expiry date: prioritize those expiring soon
-                    expiring_ingredients.sort(key=lambda x: x['days_until_expiry'])
+                    # Sort ingredients by expiry date: prioritize those expiring soon
+                    expiring_ingredients.sort(key=lambda x: x["days_until_expiry"])
 
                     # Calculate the average "priority score" for the recipe based on expiring ingredients
                     if expiring_ingredients:
-                        expiry_score = sum([ingredient['days_until_expiry'] for ingredient in expiring_ingredients]) / len(expiring_ingredients)
+                        expiry_score = sum(
+                            [
+                                ingredient["days_until_expiry"]
+                                for ingredient in expiring_ingredients
+                            ]
+                        ) / len(expiring_ingredients)
                     else:
-                     expiry_score = 0  
-            recipe_details.append(
-                {
-                    "RecipeID": recipe.id,
-                    "RecipeName": recipe.RecipeName,
-                    "NumberOfPeople": recipe.NumberOfPeople,
-                    "Instructions": recipe.Instructions,
-                    "Ingredients": ingredients_info,
-                    "diet": dietary_preferences_list,
-                    "expiry_score": expiry_score
-                }
-            )
+                        expiry_score = 0
 
-          # Sort recipes by the priority score based on expiring ingredients
-        recipe_details.sort(key=lambda x: x['expiry_score'])
+            if useable_ingredients:
+                recipe_details.append(
+                    {
+                        "RecipeID": recipe.id,
+                        "RecipeName": recipe.RecipeName,
+                        "NumberOfPeople": recipe.NumberOfPeople,
+                        "Instructions": recipe.Instructions,
+                        "Ingredients": ingredients_info,
+                        "diet": dietary_preferences_list,
+                        "expiry_score": expiry_score,
+                    }
+                )
+
+        # Sort recipes by the priority score based on expiring ingredients
+        recipe_details.sort(key=lambda x: x["expiry_score"])
         return jsonify({"recipes": recipe_details})
 
     except SQLAlchemyError as e:
@@ -206,7 +219,6 @@ def choose_recipe():
     data = request.json
     recipe_id = data.get("recipeID")
     number_of_people = data.get("numberOfPeople")
-    print(f"Received recipe ID: {recipe_id}, number of people: {number_of_people}")
 
     try:
         # Find the recipe by ID
